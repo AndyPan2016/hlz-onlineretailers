@@ -1,0 +1,225 @@
+<!--
+  触摸组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年7月1日17:45:09
+  @LastUpdateDate: 2019年7月1日17:45:45
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.touch-component {
+  position: relative;
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="touch-component" style="{{ 'width: ' + width +';height:' + height + ';' + (top ? ('top:' + top + ';') : '') }}'" bindtouchstart="touchStartEvent" bindtouchmove="touchMoveEvent" bindtouchend="touchEndEvent">
+    <slot name="touch-content"></slot>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+
+export default class TouchComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 组件容器宽度
+    width: { type: String, default: '100%' },
+    // 组件容器高度
+    height: { type: String, default: '100%' },
+    top: { type: String },
+    // 移动最小间距：触摸移动多少距离触发该放下的事件（默认为100rpx）
+    minDistance: { type: Number, default: 10 },
+    // 触摸开始事件
+    onTouchStart: Function,
+    // 触摸移动事件
+    onTouchMove: Function,
+    // 设置move方向[left、right、up、down]，设置后只能向设置方向移动才会响应move事件
+    moveDirection: { type: String },
+    // 触摸结束事件
+    onTouchEnd: Function,
+    // 向上滑动事件
+    onSlideUp: Function,
+    // 向下滑动事件
+    onSlideDown: Function,
+    // 向左滑动事件
+    onSlideLeft: Function,
+    // 向右滑动事件
+    onSlideRight: Function
+  }
+  // 模板(绑定)数据
+  data = {
+    // 触摸开始位置数据
+    startData: null,
+    // 触摸移动位置数据
+    moveData: null,
+    // 触摸移动位置数据集合，所有移动轨迹坐标数据
+    moveAryData: null,
+    moveYDistance: null,
+    moveXDistance: null,
+    // 触摸结束时的数据
+    endData: null
+  }
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  methods = {
+    /**
+     * 触摸开始
+     */
+    touchStartEvent(e) {
+      let changedTouches = e.changedTouches
+      this.startData = changedTouches[0] || {}
+
+      if (this.onTouchStart) {
+        this.onTouchStart.call(this.$parent, e, this.startData)
+      }
+      this.$emit('touchStart', e, this.startData)
+    },
+    /**
+     * 触摸移动
+     */
+    touchMoveEvent(e) {
+      let changedTouches = e.changedTouches
+      let changedTouche = changedTouches[0] || {}
+      this.moveData = changedTouche
+      this.moveAryData = this.moveAryData || []
+      this.moveAryData.push(changedTouche)
+
+      let moveDirection = this.moveDirection
+      let startClientY = this.startData.clientY
+      let moveClientY = this.moveData.clientY
+      let yDistance = startClientY - moveClientY
+      this.moveYDistance = yDistance
+
+      let startClientX = this.startData.clientX
+      let moveClientX = this.moveData.clientX
+      let xDistance = startClientX - moveClientX
+      this.moveXDistance = xDistance
+
+      if (moveDirection === 'down' || moveDirection === 'up') {
+        if (yDistance < 0 && moveDirection === 'down') {
+          this.touchMove(e)
+        } else if (yDistance > 0 && moveDirection === 'up') {
+          this.touchMove(e)
+        }
+      } else if (moveDirection === 'left' || moveDirection === 'right') {
+        if (xDistance < 0 && moveDirection === 'right') {
+          this.touchMove(e)
+        } else if (xDistance > 0 && moveDirection === 'left') {
+          this.touchMove(e)
+        }
+      } else {
+        this.touchMove(e)
+      }
+      // this.$emit('touchMove', this.moveData, this.moveAryData)
+    },
+    /**
+     * 触摸结束
+     */
+    touchEndEvent(e) {
+      let changedTouches = e.changedTouches
+      this.endData = changedTouches[0] || {}
+
+      if (this.onTouchEnd) {
+        this.onTouchEnd.call(this.$parent, e, this.endData)
+      }
+      this.$emit('touchEnd', e, this.endData)
+
+      this.touchCompute()
+    }
+  }
+
+  touchMove(e) {
+    if (this.onTouchMove) {
+      this.onTouchMove.call(
+        this.$parent,
+        e,
+        this.startData,
+        this.moveData,
+        [this.moveXDistance || 0, this.moveYDistance || 0],
+        this.moveAryData
+      )
+    }
+    this.$emit('touchMove', e, this.startData,
+      this.moveData,
+      [this.moveXDistance || 0, this.moveYDistance || 0],
+      this.moveAryData)
+  }
+
+  /**
+   * 触摸(数据)计算
+   */
+  touchCompute() {
+    let startData = this.startData
+    let moveData = this.moveData
+    let moveAryData = this.moveAryData
+    let endData = this.endData
+    let minDistance = this.minDistance
+
+    let startClientX = startData.clientX
+    let startClientY = startData.clientY
+
+    let endClientX = endData.clientX
+    let endClientY = endData.clientY
+
+    let xDistance = startClientX - endClientX
+    let yDistance = startClientY - endClientY
+
+    // 事件返回数据
+    let result = {
+      startData,
+      moveData,
+      moveAryData,
+      endData,
+      distance: [xDistance, yDistance]
+    }
+
+    if (xDistance < 0) {
+      // 向右
+      if (-xDistance >= minDistance) {
+        if (this.onSlideRight) {
+          this.onSlideRight.call(this.$parent, result)
+        }
+        this.$emit('slideRight', result)
+      }
+    } else if (xDistance > 0) {
+      // 向左
+      if (xDistance >= minDistance) {
+        if (this.onSlideLeft) {
+          this.onSlideLeft.call(this.$parent, result)
+        }
+        this.$emit('slideLeft', result)
+      }
+    }
+
+    if (yDistance < 0) {
+      // 向下
+      if (-yDistance >= minDistance) {
+        if (this.onSlideDown) {
+          this.onSlideDown.call(this.$parent, result)
+        }
+        this.$emit('slideDown', result)
+      }
+    } else {
+      // 向上
+      if (yDistance >= minDistance) {
+        if (this.onSlideUp) {
+          this.onSlideUp.call(this.$parent, result)
+        }
+        this.$emit('slideUp', result)
+      }
+    }
+  }
+
+  onLoad() {
+  }
+}
+</script>

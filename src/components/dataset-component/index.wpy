@@ -1,0 +1,75 @@
+<!--
+  数据状态管理组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年5月9日15:37:06
+  @LastUpdateDate: 2019年5月9日15:37:10
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.dataset-component {
+  .dataset-null,
+  .dataset-loading {
+    padding: 100rpx 0;
+    text-align: center;
+    font-size: 40rpx;
+    color: @color-dddddd;
+  }
+  .is-img {
+    color: @color-888888;
+    font-size: 26rpx;
+    .img-null {
+      width: 412rpx;
+      height: 404rpx;
+      margin: 0 auto 40rpx auto;
+      display: block;
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="dataset-component">
+    <view class="dataset-null" wx:if="{{ !dataset || !dataset.length }}">
+      <view class="is-img" wx:if="{{nullImg}}">
+        <image class="img-null" src="https://media.ihunlizhe.com/market/assets/images/nodetail.png"></image>
+        嗯，什么都没有~
+      </view>
+      <text wx:else>{{nullTip}}</text>
+    </view>
+    <view class="dataset-loading" wx:elif="{{ dataset == 'loading' }}">{{loadingTip}}</view>
+    <view class="dataset-slot-wrap" wx:else>
+      <slot name="dataset-slot"></slot>
+    </view>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+
+export default class DataSetComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 数据集合
+    dataset: { type: Array | String | Object, twoWay: true },
+    // 为空提示
+    nullTip: { type: String | Object, default: '暂无数据' },
+    // 是否展示为空的图片
+    nullImg: { type: Boolean, default: false },
+    // 加载中提示
+    loadingTip: { type: String | Object, default: '加载中...' }
+  }
+  // 模板(绑定)数据
+  data = {}
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  methods = {}
+}
+</script>

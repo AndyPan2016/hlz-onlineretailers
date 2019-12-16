@@ -1,0 +1,142 @@
+<!--
+ * @Description: 电商底部组件
+ * @Author: huyanhai
+ * @since: 2019-08-13 10:39:30
+ * @lastTime: 2019-08-21 11:17:20
+ -->
+<template>
+  <view class="footer" style="{{'padding-bottom:'+modelXHeight+'rpx'}}">
+    <block wx:for="{{footerData}}">
+      <view class="repeart-item" :class="{active:item.active}" @tap="toPage" data-item="{{item}}">
+        <view class="{{'icon icon-'+item.icon}}" :class="{active:messageCount}" wx:if="{{item.text === '我的'}}"></view>
+        <view class="{{'icon icon-'+item.icon}}" wx:else></view>
+        <view class="text">{{item.text}}</view>
+      </view>
+    </block>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class footComponent extends wepy.component {
+  props = {
+    footerData: Array,
+    messageCount: String
+  }
+  data = {
+    userNo: '',
+    modelXHeight: ''
+  }
+  methods = {
+    toPage(e) {
+      let path = e.currentTarget.dataset.item.path
+      switch (path) {
+        case '/index':
+          wepy.navigateTo({ url: 'index' })
+          break
+        case '/my-order':
+          wepy.navigateTo({ url: 'my-order' })
+          break
+        case '/my':
+          wepy.navigateTo({ url: 'my' })
+          break
+        default:
+          break
+      }
+    }
+  }
+  getSystemInfo() {
+    let that = this
+    wx.getSystemInfo({
+      success(res) {
+        let model = res.model
+        if (model.indexOf('X') > -1) {
+          that.modelXHeight = 34
+          that.$apply()
+        }
+      }
+    })
+  }
+
+  onLoad() {
+    this.getSystemInfo()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+@import '../../../assets/less/mixin.less';
+@resourcePath: 'https://media.ihunlizhe.com/market/';
+@basePathOnline: '@{resourcePath}OnlineRetailers/assets/menu/';
+.footer {
+  display: flex;
+  background: #ffffff;
+  position: fixed;
+  width: 100%;
+  height: 98rpx;
+  line-height: 98rpx;
+  bottom: 0;
+  z-index: 99999;
+  .repeart-item {
+    width: 33.33%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    &.active {
+      .text {
+        color: @color-C50F0F;
+      }
+      .icon-home {
+        background: url('@{basePathOnline}shop-home-active.png') 0 0 no-repeat;
+        background-size: 50rpx 50rpx;
+      }
+      .icon-order {
+        background: url('@{basePathOnline}shop-order-active.png') 0 0 no-repeat;
+        background-size: 50rpx 50rpx;
+      }
+      .icon-my {
+        background: url('@{basePathOnline}shop-my-active.png') 0 0 no-repeat;
+        background-size: 50rpx 50rpx;
+      }
+    }
+    .icon-home {
+      background: url('@{basePathOnline}shop-home-normal.png') 0 0 no-repeat;
+      background-size: 50rpx 50rpx;
+    }
+    .icon-order {
+      background: url('@{basePathOnline}shop-order-normal.png') 0 0 no-repeat;
+      background-size: 50rpx 50rpx;
+    }
+    .icon-my {
+      background: url('@{basePathOnline}shop-my-normal.png') 0 0 no-repeat;
+      background-size: 50rpx 50rpx;
+    }
+    .icon {
+      width: 50rpx;
+      height: 50rpx;
+      display: block;
+      margin-bottom: 10rpx;
+      position: relative;
+      &.active {
+        &::before {
+          position: absolute;
+          width: 12rpx;
+          height: 12rpx;
+          background: @color-F74545;
+          border-radius: 12rpx;
+          content: '';
+          right: 0;
+        }
+      }
+    }
+
+    .text {
+      font-size: 20rpx;
+      display: block;
+      margin: 0;
+      line-height: 20rpx;
+    }
+  }
+}
+</style>

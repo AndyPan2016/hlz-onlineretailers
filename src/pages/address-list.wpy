@@ -1,0 +1,507 @@
+<!--
+ * @Description: 收货地址
+ * @Author: huyanhai
+ * @since: 2019-05-17 15:33:50
+ * @lastTime: 2019-10-09 10:50:39
+ -->
+
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="addlist" wx:if="{{giftData && !isUserpage}}">
+        <repeat for="{{giftAddress}}" key="index" index="index" item="item">
+          <view class="item-box">
+            <view class="infos giftaddress-col">
+              <view class="info">
+                <text class="name">{{ item.realName }}</text>
+                <text class="phone">{{ item.mobileNo }}</text>
+              </view>
+              <text class="address">{{ item.province }}{{ item.city }}{{ item.district }}{{ item.address }}</text>
+            </view>
+          </view>
+        </repeat>
+      </view>
+      <view class="addlist" wx:elif="{{giftType==='MULTIPLE_ADDRESS'}}">
+        <scroll-view scroll-y class="scollbox" bindscrolltolower="scollGetOrderConsignee">
+          <repeat for="{{orderTrackList}}" key="index" index="index" item="item">
+            <view class="item-box">
+              <view class="infos giftaddress-col">
+                <view class="info">
+                  <text class="name">{{ item.consignee }}</text>
+                  <text class="phone">{{ item.mobileNo }}</text>
+                </view>
+                <text class="address">{{ item.province }}{{ item.city }}{{ item.town }}{{ item.address }}</text>
+              </view>
+            </view>
+          </repeat>
+        </scroll-view>
+      </view>
+      <view class="addlist" wx:else>
+        <block wx:if="{{addressList.length>0}}">
+          <radio-group bindchange="addressChange">
+            <repeat for="{{addressList}}" key="index" index="index" item="item">
+              <view class="address-col" data-index="{{index}}" bindtouchstart="touchstart" bindtouchmove="touchmove" bindtouchend="touchend">
+                <view class="item-box {{item.isTouchMove ? 'touch-move-active' : ''}}">
+                  <label class="radio">
+                    <radio checked="{{item.ischeck}}" value="{{item.receiverNo}}" bindchange="addressListChecked" color="#c50f0f" class="addressRadio" wx:if="{{!toBack}}" />
+                    <view class="infos">
+                      <view class="info">
+                        <text class="name">{{ item.name }}</text>
+                        <text class="phone">{{ item.mobileNo }}</text>
+                        <view wx:if="{{item.status==='YES'}}" class="defaule-address">默认</view>
+                      </view>
+                      <text class="address">{{ item.province }} {{ item.city }} {{ item.town }} {{ item.address }}</text>
+                    </view>
+                  </label>
+                  <view class="icon-edit" data-address="{{item}}" @tap="goaddAddress">
+                    <image class="edit" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/edit.png':''}}"></image>
+                  </view>
+                </view>
+                <view class="dedele" @tap="delAddress" data-item="{{item}}" wx:if="{{isUserpage}}"></view>
+              </view>
+            </repeat>
+          </radio-group>
+        </block>
+        <view class="no-address" wx:else>
+          <image src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/no-address.png':''}}" class="ui-img" />
+          <text class="text">您还没有收货地址哦~</text>
+        </view>
+        <view class="add-btn" @tap="goaddAddress">+ 添加地址</view>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { AddressService, GoodsDetailService } from '../services'
+import { STATUS, RESOURCE_PATCH } from '@/configs'
+import { Tips } from '@/utils'
+import { timesFormate } from '@/utils/times.js'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class AddressListPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  props = {}
+  data = {
+    title: '收货地址',
+    theme: 'while',
+    userNo: '',
+    addressList: [],
+    resourct_path: RESOURCE_PATCH,
+    addressId: '',
+    giftData: null,
+    giftAddress: [],
+    giftType: null,
+    orderNo: '',
+    start: 1,
+    limit: 10,
+    orderTrackList: [],
+    orderTracktotal: '',
+    touchstart: 0,
+    touchmove: 0,
+    range: 0,
+    moveRange: 0,
+    toBack: '',
+    isUserpage: false
+  }
+  components = {
+    navigationBar
+  }
+  onLoad(option) {
+    let userNo = wepy.getStorageSync(STATUS.USER_NO)
+    this.giftData = wx.getStorageSync('GIFT_DATA') || ''
+    this.giftType = option.type || ''
+    this.orderNo = option.orderNo || ''
+    this.toBack = option.toBack
+    this.isUserpage = option.isUserpage === 'true'
+    if (userNo) {
+      this.userNo = userNo
+      this.addressId = option.data
+    }
+    this.$apply()
+  }
+  onShow() {
+    if (this.giftData && !this.isUserpage) {
+      this.getGiftAddress()
+    } else if (this.giftType === 'MULTIPLE_ADDRESS') {
+      this.getOrderConsignee()
+    } else {
+      let addressId = wx.getStorageSync('ADDRESS-DETAIL')
+      if (addressId) {
+        this.addressId = addressId.receiverNo
+      }
+      this.getAddress({
+        userNo: this.userNo
+      })
+    }
+  }
+
+  /**
+   * 查询订单收货人
+   */
+  getOrderConsignee() {
+    AddressService.orderConsigneeInfoList({
+      data: {
+        orderNo: this.orderNo,
+        limit: this.limit,
+        start: this.start
+      }
+    })
+      .then(res => {
+        let result = res.data
+        if (result.success) {
+          this.orderTracktotal = result.totalRows
+          if (this.start > 1) {
+            for (let item of result.rows) {
+              this.orderTrackList.push(item)
+            }
+          } else {
+            this.orderTrackList = result.rows || []
+          }
+          this.start++
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 获取收货地址
+   */
+  getAddress(parme) {
+    AddressService.addressQuery({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          if (this.addressId) {
+            data.addressInfos.map(val => {
+              val.isTouchMove = false
+              // val.mobileNo = timesFormate.phoneFormate(val.mobileNo) // 手机号掩码
+              if (val.receiverNo === this.addressId) {
+                val.ischeck = true
+              } else {
+                val.ischeck = false
+              }
+            })
+          } else {
+            data.addressInfos.map(val => {
+              val.isTouchMove = false
+              // val.mobileNo = timesFormate.phoneFormate(val.mobileNo) // 手机号掩码
+              if (val.status === 'YES') {
+                val.ischeck = true
+              } else {
+                val.ischeck = false
+              }
+            })
+          }
+
+          this.addressList = data.addressInfos
+          this.$apply()
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 删除收货地址
+   */
+  delAddress(e) {
+    let parme = {}
+    let _this = this
+    parme['receiverNo'] = e.currentTarget.dataset.item.receiverNo
+    AddressService.addressDelete({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          _this.getAddress({
+            userNo: this.userNo
+          })
+        } else {
+          Tips.error('删除地址失败')
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 伴手礼收货地址列表查询
+   */
+  getGiftAddress() {
+    GoodsDetailService.shopInvitationGiftQuery({
+      data: {
+        ids: this.giftData
+      }
+    })
+      .then(res => {
+        let result = res.data
+        if (result.success) {
+          let data = result.invitationGiftInfos || []
+          for (let item of data) {
+            item.mobileNo = timesFormate.phoneFormate(item.mobileNo) // 手机号掩码
+          }
+          this.giftAddress = data
+          this.$apply()
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  methods = {
+    scollGetOrderConsignee(e) {
+      if ((this.start - 1) * this.limit < this.orderTracktotal) {
+        this.getOrderConsignee()
+      }
+    },
+    goaddAddress(e) {
+      let address = e.currentTarget.dataset.address || ''
+      if (address) {
+        wepy.navigateTo({
+          url: 'address-add?address=' + JSON.stringify(address)
+        })
+      } else {
+        wepy.navigateTo({ url: 'address-add' })
+      }
+    },
+    addressChange(e) {
+      let addressId = e.detail.value
+      // 临时选中的存储地址
+      let ctmCheckAddress = {}
+      if (this.addressList.length > 0) {
+        for (let item of this.addressList) {
+          if (item.receiverNo === addressId) {
+            ctmCheckAddress = item
+          }
+        }
+      }
+      wx.setStorageSync('ADDRESS-DETAIL', ctmCheckAddress)
+      wepy.navigateBack({ delta: 1 })
+    }
+  }
+  touchstart(e) {
+    for (let item of this.addressList) {
+      item.isTouchMove = false
+    }
+    this.touchstart = e.touches[0].clientX
+  }
+  touchmove(e) {
+    this.touchmove = e.touches[0].clientX
+    this.range = this.touchmove - this.touchstart
+    this.$apply()
+  }
+  touchend(e) {
+    if (!this.isUserpage) return false
+    let index = e.currentTarget.dataset.index
+    this.addressList.forEach((item, idx) => {
+      if (index === idx) {
+        if (this.range > 0) {
+          item.isTouchMove = false
+        } else {
+          item.isTouchMove = true
+        }
+      }
+    })
+
+    this.$apply()
+  }
+}
+</script>
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    height: 50vh;
+    flex: 1 0 auto;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+.addlist {
+  margin-top: 2rpx;
+  .scollbox {
+    width: 100%;
+    height: 100vh;
+  }
+  .address-col {
+    display: flex;
+    margin-bottom: 20rpx;
+    background: @color-ffffff;
+    position: relative;
+    .item-box {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      background: @color-ffffff;
+      padding: 0 30rpx;
+      position: relative;
+      z-index: 10;
+      transition: all 0.3s;
+      box-sizing: border-box;
+      &.touch-move-active {
+        transform: translateX(-120rpx);
+      }
+    }
+    .dedele {
+      flex: 0 0 auto;
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABa0lEQVRIS+2WL0tEURDFfweMBoN2v4BgMBgMu01BwWhQcJPRZBNcg8lPYFLQIFgEBW1uNBhsVoNxwQ1G4cjIXdk/7+3bfRaFvfDKu8M9c8/cM2dEzrI9CZwC68BETtgncA3UJH1kxWgAwDmwCTwDrZy4KWAeuJC0NSrAO/AmaS4vifhv+wWYljQzKoCBhqRqAcADUJGUyYZsX0UGGYdUEjVB0aAVFAVVjYygZgDspoDYj0PjOwNeCw7u3Z4FthNQG6zVdS3bB0AdqErKyigX03YkFnTVJR22A8cAP5T9XYps7wCLkmqdFbYdbeRR0kkSXLkip5cVQuoSnO14MSHE7xdTmqIxQKHQbC+kbnnfU+RloCnp6Vc1GLYflS7yvwVYkdTFedFNbEdN7oB9SUd53XQVuAmPTUYepl64bMdQEMoOD1+TdJsHEIGh0KVkOMOaTphNfH0W2+ejaVw5BjY6nK7oFjF1XAJ7vePLF2NXFTxTsKllAAAAAElFTkSuQmCC')
+        no-repeat center @color-C50F0F;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: @color-ffffff;
+      font-size: 24rpx;
+      width: 120rpx;
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      height: 100%;
+      z-index: 9;
+      background-size: 24rpx 24rpx;
+    }
+    &:last-child {
+      margin-bottom: 30rpx;
+    }
+    .radio {
+      display: flex;
+      align-items: center;
+      padding: 30rpx 0;
+      flex: 1 0 auto;
+      width: 50%;
+      .addressRadio {
+        flex: 0 0 auto;
+        margin-right: 30rpx;
+        .wx-radio-input {
+          height: 32rpx;
+          width: 32rpx;
+        }
+      }
+      .infos {
+        flex: 1 0 auto;
+        width: 50%;
+        line-height: 40rpx;
+        margin-right: 40rpx;
+        .info {
+          .name,
+          .phone {
+            font-size: 28rpx;
+            color: @color-222222;
+            font-weight: bold;
+            margin-right: 60rpx;
+          }
+          .phone {
+            margin-right: 30rpx;
+          }
+          .defaule-address {
+            display: inline-block;
+            padding: 0rpx 10rpx;
+            height: 36rpx;
+            line-height: 36rpx;
+            background: @color-C50F0F;
+            border-radius: 4rpx;
+            font-size: 24rpx;
+            color: @color-ffffff;
+          }
+        }
+        .address {
+          font-size: 24rpx;
+          color: @color-888888;
+          width: 100%;
+          word-wrap: break-word;
+          display: block;
+        }
+      }
+    }
+    .icon-edit {
+      flex: 0 0 auto;
+      width: 36rpx;
+      .edit {
+        width: 36rpx;
+        height: 40rpx;
+        position: relative;
+        z-index: 1000;
+      }
+    }
+  }
+  .giftaddress-col {
+    display: flex;
+    flex-direction: column;
+    background: @color-ffffff;
+    padding: 30rpx;
+    margin-top: 20rpx;
+    line-height: 50rpx;
+    .info {
+      overflow: hidden;
+      .name,
+      .phone {
+        font-size: 28rpx;
+        color: @color-222222;
+        font-weight: bold;
+        margin-right: 60rpx;
+      }
+      .phone {
+        margin-right: 30rpx;
+      }
+      .defaule-address {
+        display: inline-block;
+        padding: 0rpx 10rpx;
+        height: 36rpx;
+        line-height: 36rpx;
+        background: @color-C50F0F;
+        border-radius: 4rpx;
+        font-size: 24rpx;
+        color: @color-ffffff;
+      }
+    }
+    .address {
+      font-size: 24rpx;
+      color: @color-888888;
+    }
+  }
+  .add-btn {
+    background: @color-C50F0F;
+    height: 100rpx;
+    text-align: center;
+    line-height: 100rpx;
+    color: @color-ffffff;
+    font-size: 32rpx;
+    border-radius: 4rpx;
+    margin: 30rpx;
+  }
+  .no-address {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .ui-img {
+      width: 404rpx;
+      height: 324rpx;
+      margin-top: 220rpx;
+    }
+    .text {
+      font-size: 26rpx;
+      color: @color-888888;
+      margin: 40rpx 0 60rpx;
+    }
+  }
+}
+</style>

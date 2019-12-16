@@ -1,0 +1,183 @@
+<!--
+  电子请柬-顶部导航
+  @Author: zongxunjiang
+  @CreateDate: 2019年6月11日13:55:25
+  @LastUpdateDate: 2019年6月11日13:55:29
+  @Remarks: 顶部导航
+-->
+
+<!-- 页面样式 -->
+<style lang="less">
+@base64-back: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAjCAYAAACU9ioYAAABF0lEQVRIS63WOw7CMAwGYP8DR+CedKMT7QQbHJQTVEhGjpoqzdN5dIZPduz8LajzYeYnEd2JaALwQY/nYJaZmsEIJuivCUxgAtZXmMVqz7CESYnqljWYGsxgM4CXuynFCpn5QURLZL0CrFghM8vCyuL6TxTLgi1YEmzFomAPFoAZbAUQG0xwuMeUM9gLwKwNEQOOwkzLzHwjonekgqrK7P8F3Ijo4oFfAFdtm6ebMrzC/QyHte1OeQh6CofMtBcAq+ZMg7QZelNsBT1oMg9b0WzAtqCaxK4K2SK476kkjbwKismtAnfUfsP4qPmmOe6yZrec6RdRdYVatBostl/TsvvbxMt/a6ow037915ffETNL2ktSmWn/AUDBrMZVby4rAAAAAElFTkSuQmCC';
+.nbox {
+  height: 128rpx;
+  width: 100%;
+  position: relative;
+  z-index: 999999;
+  &.box-full {
+    position: absolute;
+    top: 0;
+    left: 0;
+    .navigation-bar {
+      background: none;
+      .back {
+        height: 60rpx;
+        width: 60rpx;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        overflow: hidden;
+        bottom: 10rpx;
+        &::before {
+          display: inline-block;
+          width: 50rpx;
+          height: 50rpx;
+          content: '';
+          background: url('@{base64-back}') 0 0 no-repeat;
+          background-size: 16rpx 26rpx;
+          background-position: center center;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          margin-top: -25rpx;
+          margin-left: -29rpx;
+        }
+      }
+    }
+  }
+  &.while {
+    background: #fff;
+    .title {
+      color: #222222;
+    }
+    .back {
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAjCAYAAACU9ioYAAAAsklEQVRIie3WMQ7CMAyF4V/qgjgTB+A4Hbu1W0dO1BMxISZgKIqEGGI7VI4z0Sd1e/nkqmoSAjIDK9BHYmsEmmPpeYlWBeae8M+xQTQ3ZFQgNzYo0I6VY2FTcZURC5v1ejmhWK9AbizlqWBX0dqYDrgD56x+BA7A4oXDX7sZan3tUTQDUNefsqPt0EkBq1HroAq/frRFO1H/neWzcZyyZtpgbv459UkfNaCGhlw6L18MeAPS5btxt0+9JwAAAABJRU5ErkJggg==')
+        0 0 no-repeat;
+      background-size: 20rpx 36rpx;
+      background-position: left center;
+    }
+  }
+  &.option {
+    background: none;
+    .title {
+      color: #ffffff;
+    }
+    .back {
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAjCAYAAACU9ioYAAAAsklEQVRIie3WMQ7CMAyF4V/qgjgTB+A4Hbu1W0dO1BMxISZgKIqEGGI7VI4z0Sd1e/nkqmoSAjIDK9BHYmsEmmPpeYlWBeae8M+xQTQ3ZFQgNzYo0I6VY2FTcZURC5v1ejmhWK9AbizlqWBX0dqYDrgD56x+BA7A4oXDX7sZan3tUTQDUNefsqPt0EkBq1HroAq/frRFO1H/neWzcZyyZtpgbv459UkfNaCGhlw6L18MeAPS5btxt0+9JwAAAABJRU5ErkJggg==')
+        0 0 no-repeat;
+      background-size: 20rpx 36rpx;
+      background-position: left center;
+    }
+  }
+}
+.navigation-bar {
+  height: 128rpx;
+  width: 100%;
+  position: relative;
+  z-index: 1000000;
+  position: absolute;
+  bottom: 0;
+  .title {
+    font-size: 36rpx;
+    color: #fff;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    bottom: 0rpx;
+    height: 98rpx;
+    line-height: 98rpx;
+    text-align: center;
+  }
+  .back {
+    height: 50rpx;
+    width: 40rpx;
+    background: url('@{base64-back}') 0 0 no-repeat;
+    background-size: 20rpx 36rpx;
+    background-position: left center;
+    position: absolute;
+    left: 26rpx;
+    bottom: 26rpx;
+    display: block;
+    z-index: 100;
+  }
+}
+</style>
+
+<!-- 页面模板 -->
+<template>
+  <view class="{{'nbox '+(isFull ? 'box-full ' : '')+theme}}" style="{{'height:'+statusBarHeight+'px'}}">
+    <view class="{{'navigation-bar '}}" :class="{bgshow:backgroundShow}" theme style="{{modelXHeight ? ('height:' + modelXHeight + 'rpx;') : ''}}">
+      <view class="back" @tap="goBack" wx:if="{{show}}"></view>
+      <view class="title" wx:if="{{!isFull}}">{{title}}</view>
+    </view>
+  </view>
+</template>
+
+<!-- 页面交互 -->
+<script>
+import wepy from 'wepy'
+
+export default class navigationBarComponent extends wepy.component {
+  props = {
+    title: String,
+    isFull: Boolean,
+    theme: {
+      type: String,
+      default: 'while'
+    },
+    backgroundShow: {
+      type: Boolean,
+      default: true
+    },
+    jumpPath: false
+  }
+  // data
+  data = {
+    // 页面堆栈
+    pagesLength: '',
+    show: false,
+    modelXHeight: '',
+    statusBarHeight: 44
+  }
+
+  methods = {
+    goBack() {
+      // 返回上一页
+      if (this.jumpPath) {
+        wx.navigateBackMiniProgram({
+          success(res) {}
+        })
+      } else {
+        wx.navigateBack()
+      }
+    }
+  }
+
+  getSystemInfo() {
+    let that = this
+    wx.getSystemInfo({
+      success(res) {
+        if (res.statusBarHeight) {
+          if (res.system.indexOf('iOS') > -1) {
+            that.statusBarHeight = 44 + res.statusBarHeight
+          } else {
+            that.statusBarHeight = 48 + res.statusBarHeight
+          }
+        }
+        that.$apply()
+      }
+    })
+  }
+
+  // 加载完成
+  onLoad(options) {
+    var pages = this.getCurrentPages()
+    if (pages.length > 1 || this.jumpPath) {
+      this.show = true
+    } else {
+      this.show = false
+    }
+    this.$apply()
+    this.getSystemInfo()
+  }
+}
+</script>

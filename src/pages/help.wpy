@@ -1,0 +1,163 @@
+<!--
+ * @Description: 帮助中心
+ * @Author: huyanhai
+ * @since: 2019-08-14 14:13:33
+ * @lastTime: 2019-09-17 10:38:00
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="help-hd">
+        常见问题
+      </view>
+      <scroll-view class="help-bd" scroll-y bindscrolltolower="onScrollLowerFn">
+        <block wx:for="{{infoList}}">
+          <view class="help-item" @tap="goQuestionDetail" data-items="{{item}}" wx:key="index">
+            <span class="text">{{item.question}}</span>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
+    <button open-type="contact" session-from="weapp" class="message-btn" plain="true" type="default">在线客服</button>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { MyInfoService } from '../services'
+import { Tips } from '@/configs'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class helpPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    start: '1',
+    limit: '10',
+    totalPages: '',
+    infoList: [],
+    title: '帮助中心',
+    theme: 'while'
+  }
+  components = {
+    navigationBar
+  }
+  onScrollLowerFn() {
+    if (this.totalPages > this.start * this.limit) {
+      this.getList()
+    }
+  }
+  goQuestionDetail(e) {
+    let questionNo = e.currentTarget.dataset.items.questionNO
+    let questionName = e.currentTarget.dataset.items.question
+    wepy.navigateTo({
+      url:
+        'help-detail?questionNo=' + questionNo + '&questionName=' + questionName
+    })
+  }
+  getList(parmes) {
+    let parme = Object.assign({}, parmes)
+    parme['start'] = parme['start'] || this.start
+    parme['limit'] = parme['limit'] || this.limit
+    parme['clientType'] = 'SHOP_C_MINI'
+    MyInfoService.helpFaqList({ data: parme }).then(res => {
+      if (res.data.success) {
+        this.infoList = res.data.rows
+        this.totalPages = res.data.totalRows
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  onLoad(options) {}
+  onShow() {
+    this.getList()
+  }
+}
+</script>
+
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    height: 50vh;
+    flex: 1 0 auto;
+    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+    overflow-y: scroll;
+    .help-hd {
+      height: 100rpx;
+      line-height: 100rpx;
+      font-size: 30rpx;
+      color: @color-222222;
+      padding-left: 30rpx;
+    }
+    .help-bd {
+      height: calc(100% - 100rpx);
+      background: @color-ffffff;
+      padding: 0 0 0 30rpx;
+      box-sizing: border-box;
+      .help-item {
+        height: 88rpx;
+        line-height: 88rpx;
+        font-size: 28rpx;
+        color: @color-222222;
+        border-bottom: 1px solid @color-eeeeee;
+        position: relative;
+        display: flex;
+        .text {
+          max-width: 80%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 0 0 auto;
+        }
+        &::after {
+          background: url('@{base64-icon-mapright}') 100% center no-repeat;
+          background-size: 12rpx 22rpx;
+          content: '';
+          display: block;
+          width: 12rpx;
+          height: 88rpx;
+          position: absolute;
+          right: 30rpx;
+          top: 0;
+        }
+      }
+    }
+  }
+  .message-btn {
+    height: 100rpx;
+    line-height: 100rpx;
+    background: #c50f0f !important;
+    color: #ffffff !important;
+    font-size: 32rpx;
+    text-align: center;
+    border: none;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    border: none !important;
+    border-radius: 0 !important;
+    &::after {
+      border: none !important;
+      border-radius: 0 !important;
+    }
+  }
+}
+</style>

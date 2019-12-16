@@ -1,0 +1,386 @@
+<!--
+ * @Description: 商品列表选择组件-视图模板
+ * @Author: huyanhai
+ * @since: 2019-05-15 17:49:03
+ * @lastTime: 2019-08-14 10:17:53
+ -->
+<template>
+  <view>
+    <repeat for="{{dataset}}" key="index" index="indexs" item="dataitem">
+      <view class="category-row">
+        <text class="category-name">{{dataitem.value}}</text>
+        <radio-group>
+          <label class="radio" wx:for="{{dataitem.gategory}}" wx:key="{{item.key}}">
+            <view class="radio-bg {{item.checked ? 'active' : ''}} {{item.disabled ? 'disabled' : ''}}" data-key="{{item.key}}" data-groupIdx="{{indexs}}" @tap="gategoryChange">
+              <radio value="{{item.name}}" checked="{{item.checked}}" class="gategoryRadio" />
+              <text class="ui-text">{{item.name}}</text>
+            </view>
+          </label>
+        </radio-group>
+      </view>
+    </repeat>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { Utils, Compose } from '@/utils'
+
+export default class CategoryListComponent extends wepy.component {
+  props = {
+    // 数据集合
+    dataset: {
+      type: Array,
+      default: []
+    },
+    // 商品规格关系
+    goodsSpecArray: { type: Array, default: [] },
+    // 选择事件
+    onSelect: Function
+  }
+
+  data = {
+    relations: {},
+    relations1: [],
+    allRelations: {},
+    tempCurrentRelation: []
+  }
+
+  methods = {
+    gategoryChange(e) {
+      let dataset = e.currentTarget.dataset
+      let groupidx = dataset.groupidx
+      let key = dataset.key
+
+      let gategory = (this.dataset[groupidx] || {}).gategory
+      let isDisabled = false
+      Utils.forEach(gategory, item => {
+        if (item.key === key) {
+          if (item.disabled) {
+            isDisabled = true
+            return 'break'
+          }
+        }
+      })
+      if (isDisabled) {
+        return false
+      }
+      Utils.forEach(gategory, item => {
+        if (item.key === key) {
+          item.checked = true
+        } else {
+          item.checked = undefined
+        }
+      })
+      this.$apply()
+
+      let onSelect = this.onSelect
+      if (onSelect) {
+        onSelect.call(this.$parent, this.dataset)
+      }
+
+      this.$emit('onSelect', dataset, this.dataset)
+      // 规格禁用关系
+      this.goodsSpecDisabledAfter(key)
+    }
+  }
+
+  watch = {
+    goodsSpecArray() {
+      this.eachGoodsSpecArray()
+    }
+  }
+
+  goodsSpecDisabledAfter1(idx, key) {
+    let relations = this.relations
+    let dataset = this.dataset
+    this.tempCurrentRelation = []
+    let thisChecked = []
+    // 获取当前所有选中的项
+    Utils.forEach(dataset, item => {
+      let gategory = item.gategory
+      Utils.forEach(gategory, gItem => {
+        if (gItem.checked) {
+          relations[gItem.key] = relations[gItem.key] || {}
+          relations[gItem.key]['thisKey'] = gItem.key
+          this.tempCurrentRelation.push(relations[gItem.key])
+          thisChecked.push(gItem.key)
+        }
+      })
+    })
+    // 找出选中值可以组合的值
+    let tempRelationArys = this.relations1
+    Utils.forEach(thisChecked, checkItem => {
+      let temp = []
+      Utils.forEach(tempRelationArys, relationItem => {
+        Utils.forEach(relationItem, itemChild => {
+          if (itemChild === checkItem) {
+            temp.push(relationItem)
+            return 'break'
+          }
+        })
+      })
+      tempRelationArys = temp
+    })
+    // 在dataset中找出已选中项，并设置未选择项的禁用或启用
+    Utils.forEach(dataset, datasetItem => {
+      let options = datasetItem.options
+
+      // 排除对当前项的设置(是否是当前点击项)
+      let optionsIsInCheck = false
+      Utils.forEach(thisChecked, checkItem => {
+        // 排除对已选择项的设置
+        if (options[checkItem]) {
+          optionsIsInCheck = true
+          return 'break'
+        }
+      })
+
+      if (!optionsIsInCheck) {
+        let hasRelationAry = {}
+        Utils.forEach(tempRelationArys, tempItem => {
+          Utils.forEach(tempItem, tempItemChild => {
+            if (options[tempItemChild]) {
+              hasRelationAry[tempItemChild] = true
+              return 'break'
+            }
+          })
+        })
+        let gategory = datasetItem.gategory
+        Utils.forEach(gategory, gItem => {
+          if (!hasRelationAry[gItem.key]) {
+            gItem['disabled'] = true
+            gItem['checked'] = false
+          } else {
+            gItem['disabled'] = false
+          }
+        })
+      }
+    })
+  }
+
+  /**
+   * 通过当前规则判断其他规格是否禁用
+   */
+  goodsSpecDisabled(key) {
+    let dataset = this.dataset
+    this.tempCurrentRelation = []
+    // 找出当前值可以组合的值
+    let tempRelationArys = this.relations1
+    let temp = []
+    Utils.forEach(tempRelationArys, relationItem => {
+      Utils.forEach(relationItem, itemChild => {
+        if (itemChild === key) {
+          temp.push(relationItem)
+          return 'break'
+        }
+      })
+    })
+    // 在dataset中找出已选中项，并设置未选择项的禁用或启用
+    Utils.forEach(dataset, datasetItem => {
+      let options = datasetItem.options
+      // 排除对当前项的设置(是否是当前点击项)
+      let optionsIsInCheck = false
+      if (options[key]) {
+        optionsIsInCheck = true
+      }
+      if (!optionsIsInCheck) {
+        let hasRelationAry = {}
+        Utils.forEach(temp, tempItem => {
+          Utils.forEach(tempItem, tempItemChild => {
+            if (options[tempItemChild]) {
+              hasRelationAry[tempItemChild] = true
+              return 'break'
+            }
+          })
+        })
+        let gategory = datasetItem.gategory
+        Utils.forEach(gategory, gItem => {
+          if (!hasRelationAry[gItem.key]) {
+            gItem['disabled'] = true
+            gItem['checked'] = false
+          } else {
+            gItem['disabled'] = false
+          }
+        })
+      }
+    })
+  }
+
+  goodsSpecDisabledAfter(key) {
+    let tempRelationArys = this.relations1
+    let temp = []
+    Utils.forEach(tempRelationArys, relationItem => {
+      Utils.forEach(relationItem, itemChild => {
+        if (itemChild === key) {
+          temp.push(relationItem)
+          return 'break'
+        }
+      })
+    })
+
+    let dataset = this.dataset
+    let thisChecked = []
+    // 获取当前所有选中的项
+    Utils.forEach(dataset, item => {
+      let gategory = item.gategory
+      Utils.forEach(gategory, gItem => {
+        if (gItem.checked) {
+          thisChecked.push(gItem.key)
+        }
+      })
+    })
+    if (thisChecked.length < 3) {
+      this.goodsSpecDisabled(key)
+      this.goodsSpecDisabledAfter1(key)
+    } else {
+      Compose.C(thisChecked, thisChecked.length - 1).thenend(thisGroups => {
+        let composeTemp = []
+        Utils.forEach(tempRelationArys, relationItem => {
+          let flag = false
+          Utils.forEach(thisGroups, groupItem => {
+            Utils.forEach(groupItem, gItem => {
+              if (relationItem.indexOf(gItem) > -1) {
+                flag = true
+              } else {
+                flag = false
+                return 'break'
+              }
+            })
+            if (flag) {
+              return 'break'
+            }
+          })
+          if (flag) {
+            composeTemp.push(relationItem)
+          }
+        })
+
+        Utils.forEach(dataset, dsItem => {
+          let options = dsItem.options
+          let hasRelationAry = {}
+          Utils.forEach(composeTemp, tempItem => {
+            Utils.forEach(tempItem, tempItemChild => {
+              if (options[tempItemChild]) {
+                hasRelationAry[tempItemChild] = true
+                return 'break'
+              }
+            })
+          })
+          let gategory = dsItem.gategory
+          Utils.forEach(gategory, gItem => {
+            if (!hasRelationAry[gItem.key]) {
+              gItem['disabled'] = true
+              gItem['checked'] = false
+            } else {
+              gItem['disabled'] = false
+            }
+          })
+        })
+      })
+    }
+  }
+
+  /**
+   * 遍历并商品规格关系
+   */
+  eachGoodsSpecArray() {
+    let goodsSpecArray = this.goodsSpecArray
+    let dataset = this.dataset
+    Utils.forEach(dataset, item => {
+      let gategory = item.gategory
+      Utils.forEach(gategory, gItem => {
+        this.allRelations[gItem.key] = true
+      })
+    })
+    if (goodsSpecArray && goodsSpecArray.length) {
+      Utils.forEach(goodsSpecArray, item => {
+        let specArr = item.specArr || []
+        // ---
+        let tempSpecAry = []
+        Utils.forEach(specArr, (aryItem, aryIdx) => {
+          this.relations[aryItem.valueCode] =
+            this.relations[aryItem.valueCode] || {}
+          // ---
+          tempSpecAry.push(aryItem.valueCode)
+          Utils.forEach(specArr, (specItem, specIdx) => {
+            this.relations[aryItem.valueCode][specItem.valueCode] = true
+          })
+        })
+        // ---
+        this.relations1.push(tempSpecAry)
+      })
+    }
+    if (dataset.length === 1) {
+      // this.goodsSpecDisabledAfter(null)
+      let tempSpec = {}
+      Utils.forEach(this.relations1, relationItem => {
+        Utils.forEach(relationItem, cItem => {
+          tempSpec[cItem] = true
+        })
+      })
+      Utils.forEach(dataset, datasetItem => {
+        let gategory = datasetItem.gategory
+        Utils.forEach(gategory, gItem => {
+          if (!tempSpec[gItem.key]) {
+            gItem['disabled'] = true
+          }
+        })
+      })
+      this.$apply()
+    }
+  }
+
+  onLoad() {
+    this.eachGoodsSpecArray()
+  }
+}
+</script>
+<style lang="less">
+@import '../../../assets/less/mixin.less';
+.category-name {
+  font-size: 30rpx;
+  color: @color-222222;
+  font-weight: 500;
+}
+.radio {
+  margin-right: 30rpx;
+  margin-bottom: 30rpx;
+  display: inline-block;
+  .radio-bg {
+    display: inline-block;
+    padding: 16rpx 28rpx;
+    text-align: center;
+    background: @color-F3F4F5;
+    border: 2rpx solid @color-F3F4F5;
+    box-sizing: border-box;
+    border-radius: 4rpx;
+    &.active {
+      background: fade(@color-C50F0F, 15%);
+      color: @color-C50F0F;
+      border: 2rpx solid @color-C50F0F;
+      .ui-text {
+        color: @color-C50F0F;
+      }
+    }
+    &.disabled {
+      background: @color-F3F4F5;
+      border: 2rpx solid @color-F3F4F5;
+      .ui-text {
+        color: @color-bbbbbb;
+      }
+    }
+  }
+  .gategoryRadio {
+    display: none;
+  }
+  .ui-text {
+    position: relative;
+    z-index: 10;
+    font-size: 28rpx;
+    display: block;
+  }
+  &:lastchild {
+    margin-right: 0;
+  }
+}
+</style>

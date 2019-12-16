@@ -1,0 +1,674 @@
+<!--
+  我的订单-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年5月21日15:17:38
+  @LastUpdateDate: 2019年5月21日15:18:00
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+page {
+  background: @color-F3F4F5;
+}
+.page-box {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+  .goods-dataset-slot {
+    position: relative;
+    z-index: 9;
+
+    .order-list-item {
+      background: @color-ffffff;
+      margin-top: 20rpx;
+
+      @orderHdHeight: 84rpx;
+      .order-item-hd {
+        height: @orderHdHeight;
+        border-bottom: 0.5rpx solid @color-eeeeee;
+        padding: 0 30rpx;
+        position: relative;
+
+        .order-number {
+          display: inline-block;
+          height: @orderHdHeight;
+          line-height: @orderHdHeight;
+          text-align: left;
+          position: absolute;
+          top: 0;
+          left: 30rpx;
+          right: 200rpx;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+          color: @color-333333;
+          font-size: 24rpx;
+        }
+        .order-status-text {
+          float: right;
+          height: @orderHdHeight;
+          line-height: @orderHdHeight;
+          font-size: 24rpx;
+          color: @color-C50F0F;
+        }
+      }
+      .order-item-cont {
+        position: relative;
+        height: 240rpx;
+        border-bottom: 0.5rpx solid @color-eeeeee;
+        .order-thumb {
+          width: 180rpx;
+          height: 180rpx;
+          margin: 30rpx;
+        }
+        .order-cont-detail {
+          position: absolute;
+          top: 30rpx;
+          right: 30rpx;
+          left: 240rpx;
+          bottom: 30rpx;
+          .order-name {
+            display: inline-block;
+            // height: 80rpx;
+            width: 100%;
+            display: -webkit-box;
+            -moz-box-orient: vertical;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            -webkit-line-clamp: 2;
+            word-break: break-all;
+            line-height: 40rpx;
+            font-size: 26rpx;
+            color: @color-333333;
+            text-align: left;
+          }
+          .order-spec {
+            display: inline-block;
+            width: 100%;
+            height: 20rpx;
+            font-size: 20rpx;
+            line-height: 20rpx;
+            text-align: left;
+            display: -webkit-box;
+            -moz-box-orient: vertical;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            -webkit-line-clamp: 2;
+            word-break: break-all;
+            color: @color-888888;
+            margin-top: 20rpx;
+          }
+          .order-price {
+            @priceHeight: 42rpx;
+            height: @priceHeight;
+            margin-top: 32rpx;
+            font-size: 24rpx;
+            .price {
+              float: right;
+              height: @priceHeight;
+              line-height: @priceHeight;
+              font-size: 32rpx;
+              color: @color-C50F0F;
+              font-family: 'Bahnschrift';
+            }
+            .price-lab {
+              float: right;
+              height: @priceHeight;
+              line-height: @priceHeight;
+              font-size: 24rpx;
+            }
+          }
+        }
+      }
+      .order-item-ft {
+        height: 108rpx;
+        padding: 0 30rpx;
+        position: relative;
+        .show-more {
+          position: absolute;
+          left: 20rpx;
+          .order-price {
+            line-height: 108rpx;
+            .price-lab {
+              font-size: 24rpx;
+              color: @color-333333;
+            }
+            .price {
+              font-size: 32rpx;
+              color: @color-C50F0F;
+              font-family: 'Bahnschrift';
+            }
+          }
+        }
+        .count-down {
+          height: 48rpx;
+          line-height: 48rpx;
+          text-align: center;
+          font-size: 26rpx;
+          color: @color-333333;
+          margin-top: 30rpx;
+          float: right;
+          margin-right: 20rpx;
+        }
+        .order-handle {
+          width: 148rpx;
+          height: 48rpx;
+          line-height: 48rpx;
+          text-align: center;
+          font-size: 26rpx;
+          color: @color-ffffff;
+          // padding: 12rpx 22rpx;
+          background: @color-C50F0F;
+          border-radius: 4rpx;
+          margin-top: 30rpx;
+          float: right;
+        }
+      }
+      .list-more{
+        height: 80rpx;
+        line-height: 80rpx;
+        text-align: center;
+        font-size: 28rpx;
+      }
+    }
+  }
+}
+.nodata {
+  text-align: center;
+  margin-top: 160rpx;
+  .ui-img {
+    width: 368rpx;
+    height: 382rpx;
+  }
+  .text {
+    font-size: 26rpx;
+    color: @color-888888;
+    margin-top: 40rpx;
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <scroll-view class="page" scroll-y bindscrolltolower="onScrollLowerFn" bindscrolltoupper="onScrollUpperFn" style="{{'top:'+modelXHeight+'rpx'}}">
+      <dataset :dataset.sync="orderList" :nullTip.sync="nullTip" wx:if="{{orderList.length>0}}">
+        <view slot="dataset-slot" class="goods-dataset-slot">
+          <repeat for="{{orderList}}" key="index" index="index" item="item">
+            <view class="order-list-item">
+              <view class="order-item-hd" @tap="goOrderDetail" data-item="{{item.goodsOrderNo}}">
+                <text class="order-number">订单编号：{{item.goodsOrderNo}}</text>
+                <text class="order-status-text">{{item.statusMsg}}</text>
+              </view>
+              <block wx:if="{{item.productInfoList.length > 1}}">
+                <repeat for="{{item.productInfoList}}" key="index" index="index" item="product">
+                  <view class="order-item-cont" @tap="goOrderDetail" data-item="{{item.goodsOrderNo}}" wx:if="{{index < 2}}">
+                    <image class="order-thumb" src="{{product.coverImage}}" />
+                    <view class="order-cont-detail">
+                      <text class="order-name">{{product.goodsCaption}}</text>
+                      <text class="order-spec">{{product.productSpec}}</text>
+                    </view>
+                  </view>
+                </repeat>
+                <view class="list-more" @tap="goOrderDetail" data-item="{{item.goodsOrderNo}}" wx:if="{{item.productInfoList.length > 2}}">查看全部</view>
+              </block>
+              <block wx:else>
+                <repeat for="{{item.productInfoList}}" key="index" index="index" item="product">
+                  <view class="order-item-cont" @tap="goOrderDetail" data-item="{{item.goodsOrderNo}}">
+                    <image class="order-thumb" src="{{product.coverImage}}" />
+                    <view class="order-cont-detail">
+                      <text class="order-name">{{product.goodsCaption}}</text>
+                      <text class="order-spec">{{product.productSpec}}</text>
+                      <!-- 已完成、已评价、支付处理中、备货中、待出库、待发货、已发货 -->
+                      <view class="order-price" wx:if="{{item.status === 'COMPLETED' || item.status === 'COMMENT' || item.status === 'PAY_PROCESSING' || item.status === 'IN_THE_STOCK' || item.status === 'PREPARE_OUT_STOCK' || item.status === 'PENDINGSHIPMENT' || item.status === 'SHIPPED'}}">
+                        <text class="price">￥{{item.payAmount}}</text>
+                        <text class="price-lab">共计1件商品 实付：</text>
+                      </view>
+                      <view class="order-price" wx:else>
+                        <text class="price">￥{{item.orderAmount}}</text>
+                        <text class="price-lab">共计1件商品 应付：</text>
+                      </view>
+                    </view>
+                  </view>
+                </repeat>
+              </block>
+              <!-- 状态不等于支付处理中显示 -->
+              <view class="order-item-ft" wx:if="{{item.status !== 'PAY_PROCESSING'}}">
+                <view wx:if="{{item.productInfoList.length>1}}" class="show-more">
+                  <!-- 已完成、已评价、支付处理中、备货中、待出库、待发货、已发货 -->
+                  <view class="order-price" wx:if="{{item.status === 'COMPLETED' || item.status === 'COMMENT' || item.status === 'PAY_PROCESSING' || item.status === 'IN_THE_STOCK' || item.status === 'PREPARE_OUT_STOCK' || item.status === 'PENDINGSHIPMENT' || item.status === 'SHIPPED'}}">
+                    <text class="price-lab">共计{{item.productInfoList.length}}件商品 实付：</text>
+                    <text class="price">￥{{item.payAmount}}</text>
+                  </view>
+                  <view class="order-price" wx:else>
+                    <text class="price-lab">共计{{item.productInfoList.length}}件商品 应付：</text>
+                    <text class="price">￥{{item.orderAmount}}</text>
+                  </view>
+                </view>
+                <!-- 待支付状态 -->
+                <text class="order-handle" data-item="{{item}}" @tap="continuePay" wx:if="{{item.status === 'PENDING_PAYMENT'}}">去付款</text>
+                <!-- 支付失败状态 -->
+                <text class="order-handle" data-item="{{item}}" @tap="continuePay" wx:if="{{item.status === 'PAY_FAILED'}}">继续付款</text>
+                <!-- 已取消、已关闭、已完成、已评价状态 -->
+                <text class="order-handle" data-item="{{item}}" @tap="buyOnce" wx:if="{{item.status === 'CANCELED' || item.status === 'CLOSED' || item.status === 'COMPLETED' || item.status === 'COMMENT'}}">再次购买</text>
+                <!-- 备货中、待出库、待发货状态 -->
+                <text class="order-handle" data-item="{{item}}" @tap="reminder" wx:if="{{item.status === 'IN_THE_STOCK' || item.status === 'PREPARE_OUT_STOCK' || item.status === 'PENDINGSHIPMENT'}}">我要催单</text>
+                <!-- 已发货状态 -->
+                <text class="order-handle" @tap="goLogistics" data-item="{{item}}" wx:if="{{item.status === 'SHIPPED'}}">查看物流</text>
+                <!-- 待支付，显示订单有效时间倒计时 -->
+                <text class="count-down" wx:if="{{item.status === 'PENDING_PAYMENT'}}">剩余{{item.dataTimeString}}</text>
+              </view>
+            </view>
+          </repeat>
+        </view>
+      </dataset>
+      <view class="nodata" wx:else>
+        <image class="ui-img" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/myorder-nodata.png" />
+        <view class="text">还没有产生订单哦~去逛逛吧</view>
+      </view>
+    </scroll-view>
+    <user-authorize :onAuthorizeAll="onAuthorizeAllFn" :authorizeType="authorizeType" :onCloseAuthorize="onCloseAuthorizeFn" />
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+import DataSetComponent from '@/components/dataset-component/index'
+import UserAuthorizeComponent from '@/components/user-authorize-component/index'
+import { Tips, DataPipe, Utils } from '@/utils'
+import { timesFormate } from '@/utils/times.js'
+import { MyOrderService, IndexService, ShopCartService } from '../services'
+import { STATUS, RESOURCE_PATCH } from '@/configs'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class GoodsSearchPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+
+  components = {
+    dataset: DataSetComponent,
+    // 用户认证授权组件
+    'user-authorize': UserAuthorizeComponent,
+    navigationBar
+  }
+
+  data = {
+    title: '我的订单',
+    theme: 'while',
+    // 授权类型
+    authorizeType: ['WXLogin', 'AccountInfo', 'UserInfo'],
+    nullTip: '暂无订单',
+    // 商品列表(初始加载状态)
+    orderList: 'loading',
+    // 页码
+    pageNo: 1,
+    // 总页数
+    totalPages: 1,
+    // 用户编号
+    userNo: null,
+    // 订单编号
+    goodsOrderNo: '',
+    // 计时器
+    timer: null,
+    // 图片公共路径
+    resourct_path: RESOURCE_PATCH,
+    modelXHeight: 128
+  }
+
+  methods = {
+    /**
+     * 再次购买
+     */
+    buyOnce(e) {
+      let dataset = e.currentTarget.dataset || {}
+      let productList = []
+      for (let item of dataset.item.productInfoList) {
+        productList.push({
+          num: item.minOrderNum, // 选中的商品数量
+          productNo: item.productNo // 选中的产品编号
+        })
+      }
+      this.addShopCart({
+        productList: productList
+      })
+    },
+    /**
+     * 我要催单
+     */
+    reminder(e) {
+      let dataset = e.currentTarget.dataset || {}
+      let orderNo = (dataset.item || {}).goodsOrderNo
+      MyOrderService.reminder({
+        data: {
+          goodsOrderNo: orderNo
+        }
+      })
+        .then(res => {
+          Tips.msg('已收到您的催单申请，我们尽快处理')
+        })
+        .catch(err => {
+          Tips.error(err.message)
+        })
+    },
+
+    /**
+     * 继续支付，去支付
+     */
+    continuePay(e) {
+      let goodsOrderNo = e.currentTarget.dataset.item.goodsOrderNo
+      this.goodsOrderNo = e.currentTarget.dataset.item.goodsOrderNo
+      this.$apply()
+      this.doPay({ goodsOrderNo: goodsOrderNo })
+    },
+
+    /**
+     * 点击订单，查看订单详情
+     */
+    goOrderDetail(e) {
+      let goodsOrderNo = e.currentTarget.dataset.item
+      wepy.navigateTo({ url: 'order-detail?goodsOrderNo=' + goodsOrderNo })
+    },
+
+    /**
+     * 查看物流
+     */
+    goLogistics(e) {
+      let goodsOrderNo = e.currentTarget.dataset.item.goodsOrderNo
+      let statusCode = e.currentTarget.dataset.item.statusCode
+      let orderType = e.currentTarget.dataset.item.orderType
+      wepy.navigateTo({
+        url:
+          'logistics?goodsOrderNo=' +
+          goodsOrderNo +
+          '&status=' +
+          statusCode +
+          '&type=' +
+          orderType
+      })
+    }
+  }
+  getSystemInfo() {
+    let that = this
+    wx.getSystemInfo({
+      success(res) {
+        let model = res.model
+        if (model.indexOf('X') > -1) {
+          that.modelXHeight = 180
+          that.$apply()
+        }
+      }
+    })
+  }
+  /**
+   * 添加购物车
+   */
+  addShopCart(parme) {
+    let parmes = { ...parme }
+    parmes['userNo'] = this.userNo
+    ShopCartService.shopCartAdd({
+      data: parmes
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          Tips.success('成功，在购物车等您哟~')
+          setTimeout(() => {
+            wx.switchTab({ url: './cart' })
+          }, 1000)
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  // 支付接口
+  doPay(parme) {
+    let _self = this
+    parme = parme || {}
+    parme['payType'] = 'WEIXIN_JS'
+    parme['openid'] = wepy.getStorageSync(STATUS.OPEN_ID)
+    MyOrderService.orderPay({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // 订单提交成功发起微信支付
+          let payparme = JSON.parse(data.payInfo)
+          wx.requestPayment({
+            timeStamp: payparme.jsTimeStamp,
+            nonceStr: payparme.jsNonceStr,
+            package: payparme.jsPackage,
+            signType: payparme.signType,
+            paySign: payparme.sign,
+            success(res) {
+              Tips.success('支付成功')
+            },
+            fail(res) {
+              _self.cancelOrder({ payOrderNo: data.payOrderNo })
+            }
+          })
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  // 取消订单
+  cancelOrder(parme) {
+    MyOrderService.orderCanclePay({
+      data: parme
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // 订单取消支付，跳转到我的订单页面
+          wepy.navigateTo({
+            url: 'order-detail?goodsOrderNo=' + this.goodsOrderNo
+          })
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 所有授权完成
+   */
+  onAuthorizeAllFn(data) {
+    this.userNo = data.userNo
+    this.loadData()
+    this.checkUserMassage()
+  }
+
+  /**
+   * 关闭授权
+   */
+  onCloseAuthorizeFn() {}
+
+  /**
+   * 向下滚动加载数据
+   */
+  onScrollLowerFn() {
+    if (this.pageNo < this.totalPages) {
+      this.pageNo++
+      this.loadData('', true)
+    }
+  }
+
+  /**
+   * 向上滚动刷新数据
+   */
+  onScrollUpperFn() {
+    if (this.pageNo !== 1) {
+      this.pageNo = 1
+      this.loadData()
+    }
+  }
+
+  loadData(isShowLoad, isPage) {
+    if (isShowLoad) {
+      // 初始页面列表内容位置显示'加载中'
+      this.goodsList = 'loading'
+      this.$apply()
+    }
+    MyOrderService.orderPageQuery({
+      data: {
+        status: 'ALL',
+        start: this.pageNo,
+        userNo: this.userNo
+      }
+    })
+      .then(res => {
+        let data = res.data || {}
+        let dataRows = data.rows || []
+        DataPipe.basePipe(dataRows)
+        this.totalPages = data.totalPages
+        if (this.pageNo === 1) {
+          this.orderList = dataRows
+        } else {
+          this.orderList = this.orderList !== 'loading' ? this.orderList : []
+          Utils.forEach(dataRows, dataItem => {
+            this.orderList.push(dataItem)
+          })
+        }
+        this.$apply()
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 待付款订单的倒计时
+   */
+  countDown() {
+    let that = this
+    this.timer = setInterval(() => {
+      let orderList = that.orderList
+      if (orderList !== 'loading') {
+        Utils.forEach(orderList, dataItem => {
+          if (dataItem.status === 'PENDING_PAYMENT') {
+            // 获取现在的时间
+            let nowDate = new Date().getTime()
+            // 过期时间
+            let expireTime = dataItem.expireTime
+
+            // let expireTime = '2019-05-23 17:58:12'
+            let expireDate = timesFormate.str2Stamp(expireTime).getTime()
+
+            // 计算时间差
+            let dSecond = parseInt((expireDate - nowDate) / 1000)
+            if (dSecond < 0) {
+              // 倒计时结束
+              // dataItem.status = 'CLOSED'
+              // dataItem.statusMsg = '已关闭'
+              return false
+            } else {
+              // 通过现在距离结束时间的秒数求出天数（秒数/24*60*60）
+              let dDay = parseInt(dSecond / (24 * 60 * 60))
+              // 通过现在距离结束的秒数取余 求出 去掉天数剩下的秒数
+              let reSecond = dSecond % (24 * 60 * 60)
+              // 通过计算完剩下的秒数  求出小时数
+              let dHour = parseInt(reSecond / 3600)
+              // 通过计算小时 剩下的秒数 求分钟数
+              let reSecond1 = reSecond % 3600
+              let dMinute = parseInt(reSecond1 / 60)
+              // 通过计算分钟数 剩下的秒数
+              let nowSecond = reSecond1 % 60
+              dataItem.dataTimeString =
+                (dDay ? dDay + '天' : '') +
+                (dHour >= 10 ? dHour : '0' + dHour) +
+                ':' +
+                (dMinute >= 10 ? dMinute : '0' + dMinute) +
+                ':' +
+                (nowSecond >= 10 ? nowSecond : '0' + nowSecond)
+              if (!dDay && !dHour && !dMinute && !nowSecond) {
+                // 倒计时结束
+                dataItem.status = 'CLOSED'
+                dataItem.statusMsg = '已关闭'
+              }
+            }
+            that.$apply()
+          }
+        })
+      }
+    }, 1000)
+  }
+  // 清除倒计时
+  clearTimer() {
+    clearInterval(this.timer)
+  }
+  /**
+   * 用户是否有未读消息
+   */
+  checkUserMassage() {
+    let parme = {}
+    parme['userNo'] = this.userNo
+    parme['clientType'] = 'SHOP_C_MINI'
+    IndexService.userNotReadNoticeCount({
+      data: parme
+    }).then(res => {
+      if (res.data.success) {
+        this.messageCount = res.data.count ? res.data.count.toString() : ''
+        if (this.messageCount) {
+          wx.showTabBarRedDot({
+            index: 2
+          })
+        }
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  onLoad() {
+    this.getSystemInfo()
+  }
+
+  onShow() {
+    let userNo = wepy.getStorageSync(STATUS.USER_NO)
+    this.orderList = 'loading'
+    if (userNo) {
+      this.userNo = userNo
+      this.loadData(true)
+      // 启动待付款订单倒计时
+      this.countDown()
+      this.checkUserMassage()
+    } else {
+      this.$invoke('user-authorize', 'authorizeActivation')
+    }
+  }
+  onHide() {
+    this.clearTimer()
+  }
+}
+</script>

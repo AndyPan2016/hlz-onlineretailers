@@ -1,0 +1,162 @@
+<!--
+  页面下拉刷新组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年7月4日14:35:27
+  @LastUpdateDate: 2019年7月4日14:35:31
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.pull-down-component {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  .pull-down-tip {
+    width: 100%;
+    text-align: center;
+    color: @color-666666;
+    font-size: 24rpx;
+    height: 30rpx;
+    line-height: 30rpx;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .pull-down-wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    &.transition {
+      .transition(all 0.2s ease);
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="pull-down-component" id="j-pull-down-component">
+    <view class="pull-down-tip" style="{{'top:' + (pullDownValue - 40) + 'rpx;'}}">{{pullDownText}}</view>
+    <touch-component class="{{ 'pull-down-wrap ' + transition}}" :top.sync="pullDown" :onTouchStart="touchStartFn" :onTouchMove="touchMoveFn" :onTouchEnd="touchEndFn" moveDirection="down">
+      <view slot="touch-content">
+        <slot name="pull-down-content"></slot>
+      </view>
+    </touch-component>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+import TouchComponent from '@/components/touch-component/index'
+
+export default class PullDownComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 下拉刷新事件
+    onPullDownRefresh: Function
+  }
+
+  // 组件
+  components = {
+    'touch-component': TouchComponent
+  }
+
+  // 模板(绑定)数据
+  data = {
+    // 向下拉取的距离
+    pullDown: 0,
+    pullDownValue: 0,
+    // 向下拉取的最大距离
+    maxPullDown: 100,
+    // 缓冲动画
+    transition: '',
+    pullDownText: '',
+    // 是否可以下拉刷新（在页面有滚动条，并且滚动条距顶部距离不为0时，不允许下拉刷新操作）
+    isPullDown: false
+  }
+
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  methods = {}
+
+  /**
+   * 拉取开始
+   */
+  touchStartFn() {
+    let that = this
+    let query = wx.createSelectorQuery()
+    query
+      .select('#j-pull-down-scroller')
+      .boundingClientRect(res => {
+        if (res) {
+          that.isPullDown = !(res.top < 0)
+          that.$apply()
+        } else {
+          query
+            .select('#j-pull-down-component')
+            .boundingClientRect(res => {
+              if (res) {
+                that.isPullDown = !(res.top < 0)
+                that.$apply()
+              }
+            })
+            .exec()
+        }
+      })
+      .exec()
+    if (this.isPullDown) {
+      this.pullDownText = '下拉'
+      this.transition = ''
+      this.$apply()
+    }
+  }
+
+  /**
+   * 拉取移动
+   */
+  touchMoveFn(e, start, move, distance) {
+    if (this.isPullDown) {
+      let yDistance = Math.abs(distance[1])
+      if (this.pullDownValue <= this.maxPullDown) {
+        this.pullDown = yDistance + 'rpx'
+        this.pullDownValue = yDistance
+        this.$apply()
+      } else {
+        this.pullDownText = '松开刷新'
+        this.$apply()
+      }
+    }
+  }
+
+  /**
+   * 拉取结束
+   */
+  touchEndFn() {
+    if (this.pullDownValue >= this.maxPullDown - 10) {
+      if (this.onPullDownRefresh) {
+        this.onPullDownRefresh.call(this.$parent)
+      }
+    }
+    this.transition = 'transition'
+    this.$apply()
+    let that = this
+    setTimeout(() => {
+      that.pullDown = '0rpx'
+      that.pullDownValue = 0
+      that.$apply()
+    }, 120)
+  }
+
+  onLoad() {
+  }
+}
+</script>

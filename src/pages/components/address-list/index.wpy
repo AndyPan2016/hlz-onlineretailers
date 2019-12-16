@@ -1,0 +1,78 @@
+<!--
+ * @Description: 收货地址列表
+ * @Author: huyanhai
+ * @since: 2019-08-19 14:35:54
+ * @lastTime: 2019-08-19 15:28:27
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view>
+    <view class="address-col">
+      <view class="item-box">
+        <movable-area>
+          <movable-view damping="100" out-of-bounds="true" direction="horizontal" x="{{moveRange}}" bindchange="touchmove" @touchstart="touchstart" @touchend="touchend">
+            <label class="radio">
+              <radio checked="{{addList.ischeck}}" value="{{addList.receiverNo}}" bindchange="addressListChecked" color="#c50f0f" class="addressRadio" />
+              <view class="infos">
+                <view class="info">
+                  <text class="name">{{ addList.name }}</text>
+                  <text class="phone">{{ addList.mobileNo }}</text>
+                  <view wx:if="{{addList.status==='YES'}}" class="defaule-address">默认</view>
+                </view>
+                <text class="address">{{ addList.province }} {{ addList.city }} {{ addList.town }}
+                  {{ addList.address }}</text>
+              </view>
+            </label>
+            <view class="icon-edit" data-address="{{addList}}" @tap="goaddAddress">
+              <image class="edit" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/edit.png':''}}"></image>
+            </view>
+          </movable-view>
+        </movable-area>
+      </view>
+      <view class="dedele" @tap="delAddress">删除</view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { RESOURCE_PATCH } from '@/configs'
+export default class addressList extends wepy.component {
+  props = {
+    addList: Array
+  }
+  data = {
+    touchstart: 0,
+    touchmove: 0,
+    range: 0,
+    moveRange: 0,
+    resourct_path: RESOURCE_PATCH
+  }
+  methods = {
+    touchstart(e) {},
+    touchmove(e) {
+      this.range = e.detail.x
+      this.$apply()
+    },
+    touchend(e) {
+      if (this.range < -46) {
+        this.moveRange = -120
+      } else {
+        this.moveRange = 0
+      }
+      this.$apply()
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+movable-area {
+  width: 100%;
+  height: 200rpx;
+  movable-view {
+    width: 100%;
+    height: 200rpx;
+    display: flex;
+    align-items: center;
+  }
+}
+</style>

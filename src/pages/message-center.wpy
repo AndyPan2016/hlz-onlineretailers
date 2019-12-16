@@ -1,0 +1,146 @@
+<!--
+ * @Description: 帮助中心
+ * @Author: huyanhai
+ * @since: 2019-08-14 14:13:33
+ * @lastTime: 2019-09-17 11:05:06
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="message-center-bd">
+        <view class="message-item" @tap="goNotice">
+          <view class="icnon pt"></view>
+          <view class="text">平台公告</view>
+          <view class="message" wx:if="{{messageCount}}">{{messageCount}}</view>
+        </view>
+        <button open-type="contact" session-from="weapp" class="message-btn" plain="true" type="default">
+          <view class="message-item" open-type="contact" session-from="weapp">
+            <view class="icnon kf"></view>
+            <view class="text">客服消息</view>
+          </view>
+        </button>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class helpPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    messageCount: '',
+    title: '消息中心',
+    theme: 'while'
+  }
+  components = {
+    navigationBar
+  }
+  goNotice() {
+    wepy.navigateTo({ url: 'notice-list' })
+  }
+  onLoad(options) {
+    this.messageCount = options.messageCount
+  }
+  onShow() {}
+}
+</script>
+
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    height: 50vh;
+    margin-top: 20rpx;
+    box-sizing: border-box;
+    .message-center-bd {
+      background: #ffffff;
+      padding: 0 0 0 30rpx;
+      .message-btn {
+        background: none;
+        border: none;
+        padding: 0;
+      }
+      .message-item {
+        height: 100rpx;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row;
+        position: relative;
+        border-bottom: 1px solid @color-eeeeee;
+
+        &::after {
+          background: url('@{base64-icon-mapright}') 100% center no-repeat;
+          background-size: 12rpx 22rpx;
+          content: '';
+          display: block;
+          width: 12rpx;
+          height: 100rpx;
+          position: absolute;
+          right: 30rpx;
+          top: 0;
+        }
+        &:last-child {
+          border-bottom: 0;
+        }
+        .message {
+          height: 26rpx;
+          font-size: 24rpx;
+          color: @color-ffffff;
+          background: @color-F74545;
+          border-radius: 14rpx;
+          line-height: 26rpx;
+          padding: 0 10rpx;
+          margin-right: 80rpx;
+          text-align: center;
+        }
+        .icnon {
+          width: 48rpx;
+          height: 48rpx;
+          flex: 0 0 auto;
+          &.pt {
+            background: url('https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/message-center-gg.png')
+              no-repeat;
+            background-size: cover;
+          }
+          &.kf {
+            background: url('https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/message-center-kf.png')
+              no-repeat;
+            background-size: cover;
+          }
+        }
+        .text {
+          width: 50%;
+          flex: 1 0 auto;
+          margin-left: 20rpx;
+          font-size: 28rpx;
+          color: @color-222222;
+          text-align: left;
+        }
+      }
+    }
+  }
+}
+</style>

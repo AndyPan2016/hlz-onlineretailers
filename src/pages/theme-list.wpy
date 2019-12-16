@@ -1,0 +1,114 @@
+<!--
+ * @Description: 主题产品列表
+ * @Author: huyanhai
+ * @since: 2019-08-13 14:06:25
+ * @lastTime: 2019-09-17 10:01:13
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <scroll-view scroll-y class="pages-scoll">
+      <view class="theme-bg" style="{{'background-image: url('+themeBg+')'}}"></view>
+      <view class="list-box">
+        <view class="list-hd">
+          产品/共{{themeList.length}}款
+        </view>
+        <view class="list-bd">
+          <themeList :themeList.sync="themeList" />
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import themeList from './components/theme-list-component/index'
+import { IndexService } from '../services'
+import { Tips } from '@/utils'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class themeListPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    themeNo: '',
+    themeBg: '',
+    themeName: '',
+    themeList: null,
+    title: '主题详情',
+    theme: 'while'
+  }
+  components = {
+    themeList,
+    navigationBar
+  }
+  onLoad(options) {
+    this.themeNo = options.themeNo
+    this.themeBg = options.themeBg
+    this.themeName = options.themeName
+    this.title = this.themeName
+    this.getThemeData()
+    this.$apply()
+  }
+  getThemeData() {
+    IndexService.themeGoodsQuery({
+      data: {
+        themeNo: this.themeNo
+      }
+    }).then(res => {
+      if (res.data.success) {
+        this.themeList = res.data.goodsInfoList
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+}
+</script>
+<style lang="less" scoped>
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .theme-bg {
+    height: 320rpx;
+    background-size: cover;
+  }
+  .pages-scoll {
+    height: 50vh;
+    overflow-y: scroll;
+    flex: 1 0 auto;
+  }
+  .list-box {
+    margin: 0 20rpx;
+    padding-bottom: 20rpx;
+    .list-hd {
+      height: 70rpx;
+      line-height: 70rpx;
+      font-size: 24rpx;
+      color: @color-222222;
+      display: flex;
+      align-items: center;
+      &::before {
+        height: 24rpx;
+        width: 4rpx;
+        background: @color-C50F0F;
+        display: inline-block;
+        content: '';
+        margin-right: 26rpx;
+      }
+    }
+  }
+}
+</style>

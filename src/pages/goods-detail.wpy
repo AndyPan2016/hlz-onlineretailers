@@ -1,0 +1,1298 @@
+<!--
+  商品详情
+  @Author: AndyPan
+  @CreateDate: 2019年5月10日15:14:17
+  @LastUpdateDate: 2019年5月10日15:16:26
+  @Remarks: 商品详情页面
+-->
+
+<!-- 页面样式 -->
+<style lang="less">
+@import '../assets/less/mixin.less';
+page {
+  background: @color-F3F4F5;
+  height: 100vh;
+}
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    margin-bottom: 98rpx;
+  }
+  .swiper-goods-detail {
+    .indicator-wrap {
+      right: 30rpx;
+      bottom: 30rpx;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 4rpx;
+      padding: 5rpx 15rpx;
+    }
+  }
+
+  .swiper-item-thumb {
+    .image-placeholder();
+  }
+
+  .goods-detail-head {
+    background: @color-ffffff;
+    padding: 30rpx;
+
+    .goods-title {
+      max-height: 80rpx;
+      display: -webkit-box;
+      -moz-box-orient: vertical;
+      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      -webkit-line-clamp: 2;
+      word-break: break-all;
+      font-size: 30rpx;
+      line-height: 38rpx;
+      color: @color-222222;
+    }
+    .goods-price {
+      height: 60rpx;
+      margin-top: 10rpx;
+      .goods-price-new {
+        font-size: 40rpx;
+        color: @color-C50F0F;
+        display: inline-block;
+        height: 60rpx;
+        line-height: 60rpx;
+        font-family: 'Bahnschrift';
+      }
+      .goods-price-old {
+        display: inline-block;
+        height: 40rpx;
+        line-height: 40rpx;
+        font-size: 28rpx;
+        color: @color-cccccc;
+        text-decoration: line-through;
+        margin-left: 24rpx;
+        font-family: 'Bahnschrift';
+      }
+    }
+    .goods-remark {
+      display: inline-block;
+      line-height: 40rpx;
+      border: 0.5rpx solid @color-C50F0F;
+      color: @color-C50F0F;
+      font-size: 24rpx;
+      .opacity(0.6);
+      padding: 0 20rpx;
+      border-radius: 4rpx;
+      margin-right: 10rpx;
+    }
+  }
+  .popup-slot-cont {
+    min-height: 800rpx;
+    margin-left: 0;
+    margin-right: 0;
+    &.custom-height {
+      height: 900rpx;
+      // overflow-y: scroll;
+      // display: flex;
+      // flex-direction: column;
+      margin-top: 190rpx;
+      // -webkit-overflow-scrolling: touch;
+      .ui-parme-list {
+        width: 100%;
+      }
+    }
+    &.no-padding {
+      margin-top: 0;
+    }
+    &.is-goods {
+      height: 700rpx;
+      min-height: initial;
+    }
+    .nav-list-promote {
+      .nav-list-wrap {
+        padding: 0;
+        .nav-list-item {
+          border-bottom: 1px solid @color-eeeeee;
+          height: inherit;
+          &:after {
+            border-bottom: 0;
+          }
+          .list-item-flex {
+            display: flex;
+            width: 100%;
+            left: 0;
+            position: relative;
+            height: inherit;
+            line-height: inherit;
+            overflow: hidden;
+            padding-right: 0;
+            background-size: auto 20rpx;
+            .label-promotion {
+              flex: 0 0 auto;
+              margin-top: 4rpx;
+            }
+            .label-middle {
+              flex: 1 0 auto;
+              padding-right: 70rpx;
+              line-height: 40rpx;
+              text-align: left;
+              width: 50%;
+              font-size: 24rpx;
+              color: @color-222222;
+            }
+          }
+          .value-full {
+            left: 0;
+          }
+        }
+      }
+    }
+  }
+  .ui-shop-box {
+    background: #fff;
+    border-top: 1px solid @color-eeeeee;
+    padding: 30rpx;
+    line-height: 40rpx;
+    .ui-question-list {
+      overflow: hidden;
+      .ui-question-item {
+        .ui-question-title {
+          display: block;
+          font-size: 28rpx;
+          color: @color-555555;
+          margin-bottom: 10rpx;
+          padding-left: 40rpx;
+          position: relative;
+          &::before {
+            content: 'Q';
+            position: absolute;
+            width: 28rpx;
+            height: 28rpx;
+            background: @color-C50F0F;
+            font-size: 20rpx;
+            color: @color-ffffff;
+            text-align: center;
+            line-height: 28rpx;
+            border-radius: 4rpx;
+            top: 6rpx;
+            left: 0rpx;
+          }
+        }
+        .ui-question-content {
+          font-size: 24rpx;
+          color: @color-888888;
+          margin-bottom: 30rpx;
+          padding-left: 40rpx;
+          position: relative;
+          display: block;
+          &::before {
+            content: 'A';
+            position: absolute;
+            width: 28rpx;
+            height: 28rpx;
+            border: 1px solid @color-C50F0F;
+            font-size: 20rpx;
+            color: @color-C50F0F;
+            text-align: center;
+            line-height: 28rpx;
+            border-radius: 4rpx;
+            top: 6rpx;
+            left: 0rpx;
+            .box-sizing(border-box);
+          }
+        }
+      }
+    }
+  }
+  /****详细参数*****/
+  .ui-parme-list {
+    padding: 0 40rpx;
+    box-sizing: border-box;
+    .ui-list-item {
+      display: flex;
+      border-bottom: 1px solid @color-eeeeee;
+      padding: 30rpx 0;
+      .ui-title {
+        flex: 0 0 auto;
+        width: 160rpx;
+        font-size: 24rpx;
+        color: @color-888888;
+      }
+      .ui-text {
+        flex: 1 0 auto;
+        width: 50%;
+        font-size: 24rpx;
+        color: @color-222222;
+      }
+    }
+  }
+  /*****产品规格**********/
+  .images-row {
+    // display: flex;
+    // align-items: center;
+    margin-bottom: 40rpx;
+    margin: 0 30rpx;
+    margin-bottom: 40rpx;
+    // flex: 0 0 auto;
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    min-height: 216rpx;
+    // border: 1rpx solid #f00;
+    .info-l {
+      width: 216rpx;
+      height: 216rpx;
+      background: gray;
+      .product_post {
+        width: 216rpx;
+        height: 216rpx;
+      }
+    }
+    .info-r {
+      // margin-left: 40rpx;
+      position: absolute;
+      top: 20rpx;
+      bottom: 0;
+      left: 256rpx;
+      right: 0;
+      // border: 1rpx solid #f00;
+      // line-height: 216rpx;
+      .goods-price-wrap{
+        display: inline-block;
+        width: 100%;
+      }
+      .price {
+        font-size: 40rpx;
+        font-weight: bold;
+        color: @color-C50F0F;
+        display: block;
+        font-family: 'Bahnschrift';
+      }
+      .operate {
+        font-size: 28rpx;
+        color: @color-555555;
+      }
+    }
+  }
+  .scroll-box {
+    // height: calc(50%);
+    // flex: 1 0 auto;
+    height: 600rpx;
+    overflow-y: scroll;
+    // overflow-x: hidden;
+  }
+  .category-row {
+    margin: 0 30rpx;
+    .category-name {
+      font-size: 30rpx;
+      color: @color-222222;
+      margin-bottom: 30rpx;
+      display: block;
+    }
+  }
+  .amount-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 10rpx 30rpx 80rpx 30rpx;
+    align-items: center;
+    &.gift {
+      margin-bottom: 20rpx;
+    }
+    .amount-name {
+      font-size: 30rpx;
+      color: @color-222222;
+      font-weight: 500;
+      .tips {
+        font-size: 24rpx;
+        color: @color-888888;
+        margin-left: 10rpx;
+        font-weight: normal;
+      }
+    }
+  }
+  .buy-btn {
+    height: 100rpx;
+    width: 100%;
+    background: @color-C50F0F;
+    text-align: center;
+    line-height: 100rpx;
+    color: @color-ffffff;
+    font-size: 32rpx;
+    display: flex;
+    .add-cart {
+      width: 50%;
+      height: 100rpx;
+      background: @color-FFAA00;
+    }
+    .buy {
+      width: 50%;
+    }
+  }
+  .ui-nav-list .nav-list-item .list-item-value {
+    &.no-more {
+      background: none;
+    }
+  }
+  .gift-tips {
+    color: @color-888888;
+    font-size: 24rpx;
+    width: 100%;
+    margin: 0 30rpx;
+  }
+}
+.isIphonx {
+  height: 68rpx;
+  background: @color-C50F0F;
+}
+.goods-intro {
+  position: relative;
+  .layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+}
+.quick-link {
+  position: fixed;
+  width: 100rpx;
+  height: 100rpx;
+  right: 0;
+  bottom: 260rpx;
+  z-index: 1000;
+  .container {
+    position: relative;
+    .normal {
+      width: 100rpx;
+      height: 100rpx;
+      background: #FF4C2F;
+      border-radius: 100rpx;
+      font-size: 24rpx;
+      color: @color-ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1000;
+      .text {
+        line-height: 30rpx;
+      }
+    }
+    .open {
+      width: 100rpx;
+      height: 100rpx;
+      background: #FF4C2F;
+      border-radius: 100rpx;
+      font-size: 24rpx;
+      color: @color-ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1000;
+      .text {
+        line-height: 30rpx;
+        &::before {
+          content: '';
+          background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAANCAYAAACzbK7QAAABfklEQVQ4T6WTOyjGURjGf08UyWVQrErKJoOZySXJZZEMBgOjSTEZKJOyUSwWi3JZMCiZDEoGg5SyKJJySSJevXo//fF9n9u7nXOe8/zO+5xzZGbTQB8wBwxLeuGfZWZDwBgwJTO7BQrDcwnolfT4F4aZyU0BB3hdO2ACGE0YbgEdku5+AzGzXGAB6EnsG3ciZjYCOOhtDOwBLZIufwIxswJgGWgMvfmhJU2mDB3SD8wCOSE6ApoknWaDmFkpsA7Uhe4ZGJA07+N3QHTSASwC+SE+81NJOkwHMbOKMK+O9QePSNJKSv8BEJAGYBUoDtEV0CppNwkxsxpgEyiP+RugXdJ2UvcFEJBaYAMoC/E90CXJDT3O+jhESaxfAM2S9j93mhYQJlXRfmVseor/4jF4jHkxfxLmx+lizAgIiLfvF+gdpcovMfUQDuIhnGd6CFkBASkC1gC/m2TtAG2SPPuM9S0gIB6Hx9IZTg7sluRxZa0fAQLisQyG24wkj+rbegU8X3z2oMk/6QAAAABJRU5ErkJggg==')
+            no-repeat;
+          width: 24rpx;
+          height: 12rpx;
+          background-size: 24rpx 12rpx;
+          display: block;
+          margin: 0 auto 5rpx auto;
+        }
+      }
+    }
+    .links {
+      position: absolute;
+      bottom: 0;
+      width: 100rpx;
+      height: 320rpx;
+      background: @color-ffffff;
+      border-radius: 100rpx;
+      z-index: 999;
+      .col {
+        width: 100rpx;
+        height: 100rpx;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        &:first-child {
+          margin-top: 10rpx;
+        }
+        .icon-home {
+          width: 40rpx;
+          height: 40rpx;
+        }
+        .icon-order {
+          width: 32rpx;
+          height: 42rpx;
+        }
+        .text {
+          font-size: 20rpx;
+          color: @color-888888;
+          margin-top: 5rpx;
+        }
+      }
+    }
+  }
+}
+.quick-layer {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 998;
+}
+</style>
+
+<!-- 页面模板 -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <!-- 顶部swiper banner -->
+    <view class="page">
+      <swiper-banner class="swiper-goods-detail" :dataset.sync="swiperDataSet" width="100%" height="620rpx" />
+      <view class="goods-detail-head">
+        <view class="goods-title">{{goodsAllInfo.goodsCaption}}</view>
+        <view class="goods-price">
+          <text class="goods-price-new">￥{{goodsAllInfo.discountPrice}}</text>
+          <text class="goods-price-old" wx:if="{{goodsAllInfo.price}}">￥{{goodsAllInfo.price}}</text>
+        </view>
+        <view class="remark-wrap">
+          <!-- <text class="goods-remark" wx:for="{{goodsAllInfo.active}}" wx:key="index" wx:item="item">{{item.tagName}}</text> -->
+          <text class="goods-remark" wx:if="{{goodsAllInfo.isCustomized==='yes'}}">{{goodsAllInfo.sendCueWords}}</text>
+        </view>
+      </view>
+      <!-- 促销 -->
+      <view class="ui-nav-list nav-list-full nav-list-custom" wx:if="{{goodsAllInfo.active.length>0}}">
+        <view class="nav-list-wrap">
+          <view class="nav-list-item" @tap="promotionTap">
+            <view class="list-item-text min">促销</view>
+            <view class="list-item-value value-full">
+              <text class="label-promotion" wx:if="{{currentSelectActivity}}">{{activityType[currentSelectActivity.activityType]}}</text>
+              {{currentSelectActivity.ruleDesc}}
+            </view>
+          </view>
+        </view>
+      </view>
+      <!-- 规格、参数 -->
+      <view class="ui-nav-list nav-list-full nav-list-custom">
+        <view class="nav-list-wrap">
+          <view class="nav-list-item" @tap="specsTap">
+            <view class="list-item-text min">规格</view>
+            <view class="list-item-value value-full">
+              <!-- <text class="value-placeholder">请选择</text> -->
+              <text class="value-placeholder">{{currentSelectSpec1 || '请选择'}}</text>
+            </view>
+          </view>
+          <view class="nav-list-item" @tap="parameterTap">
+            <view class="list-item-text min">参数</view>
+            <view class="list-item-value value-full">
+              <text class="value-placeholder">查看该商品的其他详细参数</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 运费 -->
+      <!-- <view class="ui-nav-list nav-list-full nav-list-custom">
+      <view class="nav-list-wrap">
+        <view class="nav-list-item">
+          <view class="list-item-text min">运费</view>
+          <view class="list-item-value value-full no-more">
+            <text class="value-text">平台包邮</text>
+          </view>
+        </view>
+      </view>
+    </view> -->
+      <tab type="fixed" :isHeadShadow="isHeadShadow" :items.sync="tabItems" :onSwitch="tabSwitchFn" :isLongLine="isLongLine">
+        <view slot="tab-content-slot">
+          <view class="goods-intro" wx:if="{{currentTab.key == 1}}">
+            <view class="layer"></view>
+            <rich-text nodes="{{goodsAllInfo.introduction}}"></rich-text>
+          </view>
+          <view class="goods-intro" wx:if="{{currentTab.key == 2}}">
+            <rich-text nodes="{{articleContent}}"></rich-text>
+          </view>
+        </view>
+      </tab>
+    </view>
+    <!--弹窗-->
+    <specs-parmeter type="downup" :isTapMaskClose="isTapMaskClose" :isCustomContent="isCustomContent" :dialogType="goodsType" :onCloseByUser="dialogClose">
+      <view slot="popup-body-cont-wrap" class="popup-slot-cont custom-height is-goods">
+        <view class="images-row">
+          <view class="info-l">
+            <image class="product_post" src="{{goodsAllInfo.coverImg}}" />
+          </view>
+          <view class="info-r">
+            <view class="goods-price-wrap">
+              <text class="price">￥{{price}}</text>
+              <text class="operate">{{currentSelectSpec1?'已选择：'+currentSelectSpec1:'请选择规格'}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="scroll-box">
+          <category :dataset.sync="goodsSpecList" :goodsSpecArray.sync="goodsSpecArray" :onSelect="categorySelectFn"></category>
+          <view class="amount-row" :class="{gift:amoDisable}">
+            <text class="amount-name">数量<text class="tips">({{minOrderNum}}份起订)</text></text>
+            <amount :counterNum.sync="counterNum" :minNum.sync="minOrderNum" :onReduce="reduce" :onAdd="add" :onInput="inputNumber" :onblur="blurNumber" :disable.sync="amoDisable"></amount>
+          </view>
+        </view>
+        <view class="buy-btn">
+          <view class="add-cart" @tap="addCartFn">加入购物车</view>
+          <view class="buy" @tap="gotoBuy">立即购买</view>
+        </view>
+      </view>
+    </specs-parmeter>
+    <popup-parameter type="downup" title="详细参数" titleTextAlign="center" :isCustomContent="isCustomContent" :isTapMaskClose="isTapMaskClose">
+      <view slot="popup-body-cont-wrap" class="popup-slot-cont custom-height no-padding">
+        <view class="ui-parme-list">
+          <repeat for="{{goodsParamsList}}" key="index" index="index" item="item">
+            <view class="ui-list-item">
+              <text class="ui-title">{{item.name}}</text>
+              <text class="ui-text">{{item.value}}</text>
+            </view>
+          </repeat>
+        </view>
+      </view>
+    </popup-parameter>
+    <popup-promotion type="downup" title="促销" titleTextAlign="center" :isCustomContent="isCustomContent" :isTapMaskClose="isTapMaskClose">
+      <view slot="popup-body-cont-wrap" class="popup-slot-cont">
+        <view class="ui-nav-list nav-list-full nav-list-custom nav-list-promote">
+          <view class="nav-list-wrap">
+            <repeat for="{{activityInfoList}}" key="index" index="index" item="item">
+              <view class="nav-list-item" @tap="activitySelectFn" data-item="{{item}}">
+                <view class="list-item-value list-item-flex">
+                  <text class="label-promotion">{{activityType[item.activityType]}}</text>
+                  <text class="label-middle">{{item.ruleDesc}}</text>
+                </view>
+              </view>
+            </repeat>
+          </view>
+        </view>
+      </view>
+    </popup-promotion>
+    <!--弹窗-->
+    <!--快捷导航-->
+    <view class="quick-link" wx:if="{{quickLink}}">
+      <view class="container">
+        <view class="normal" @tap="changeQuickLinkMode" wx:if="{{quickLinkOpen}}"><text class="text">快捷\n导航</text></view>
+        <view class="open" @tap="changeQuickLinkMode" wx:else>
+          <text class="text">收起</text>
+        </view>
+        <view class="links" wx:if="{{!quickLinkOpen}}">
+          <navigator url="/pages/index" open-type="switchTab" class="col">
+            <image class="icon icon-home" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/more_link_home.png" />
+            <text class="text">首页</text>
+          </navigator>
+          <navigator url="/pages/my-order" open-type="switchTab" class="col">
+            <image class="icon icon-order" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/more_link_order.png" />
+            <text class="text">订单</text>
+          </navigator>
+        </view>
+      </view>
+    </view>
+    <view class="quick-layer" wx:if="{{!quickLinkOpen}}"></view>
+    <!--快捷导航 end-->
+    <!-- 底部Footer -->
+    <footer :dataset.sync="footDataSet" :onFooterItemTap="onFooterItemTapFn" />
+    <user-authorize :onAuthorizeAll="onAuthorizeAllFn" :authorizeType="authorizeType" :onCloseAuthorize="onCloseAuthorizeFn" />
+  </view>
+</template>
+
+<!-- 页面交互 -->
+<script>
+import wepy from 'wepy'
+import SwiperComponent from '@/components/swiper-component/index'
+import PopupComponent from '@/components/popup-component/index'
+import TabComponent from '@/components/tab-component/index'
+import FooterComponent from '@/components/footer-component/index'
+import CategoryComponent from './components/category-list-component/index'
+import AmountComponent from './components/amount-component/index'
+import { GoodsDetailService, ShopCartService } from '../services'
+import { STATUS } from '@/configs'
+import { Tips, Utils, DataPipe } from '@/utils'
+import UserAuthorizeComponent from '@/components/user-authorize-component/index'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class GoodsDetailPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+
+  components = {
+    // 图片切换组件
+    'swiper-banner': SwiperComponent,
+    // 促销弹出框
+    'popup-promotion': PopupComponent,
+    // 详细参数弹出框
+    'popup-parameter': PopupComponent,
+    // 规格弹出框
+    'specs-parmeter': PopupComponent,
+    // 产品规格选择
+    category: CategoryComponent,
+    // 计数器
+    amount: AmountComponent,
+    // 选项卡
+    tab: TabComponent,
+    // 底部
+    footer: FooterComponent,
+    // 获取权限
+    'user-authorize': UserAuthorizeComponent,
+    navigationBar
+  }
+
+  data = {
+    title: '商品详情',
+    theme: 'while',
+    str: 2,
+    // swiper数据
+    swiperDataSet: [],
+    isCustomContent: true,
+    // 活动类型名称映射
+    activityType: {
+      REDUCTION: '满减',
+      DISCOUNT: '折扣'
+    },
+    // 底部数据
+    footDataSet: [
+      {
+        key: 'customer',
+        type: 'icon-text',
+        theme: 'default',
+        class: 'icon-customer',
+        text: '客服'
+      },
+      {
+        key: 'cart',
+        type: 'icon-text',
+        theme: 'default',
+        class: 'icon-shopcart',
+        text: '购物车'
+      },
+      {
+        key: 'addCart',
+        type: 'text',
+        theme: 'yellow',
+        text: '加入购物车',
+        isreset: true,
+        boxFlex: 2
+      },
+      {
+        key: 'buy',
+        type: 'text',
+        theme: 'primary',
+        text: '立即购买',
+        isreset: true,
+        boxFlex: 2
+      }
+    ],
+    isLongLine: true,
+    isHeadShadow: false,
+    // 选项卡选项数据
+    tabItems: [{ key: 1, title: '商品介绍' }, { key: 2, title: '常见问题' }],
+    // 规格分类数据
+    gategoryData: [],
+    // 当前选项卡
+    currentTab: null,
+    // 点击背景遮罩关闭弹出框
+    isTapMaskClose: true,
+    // 初始规格数量
+    counterNum: 1,
+    // 价格
+    price: 0.0,
+    startPrice: 0.0,
+    // 用户编号
+    userNo: null,
+    // 商品编号
+    goodsNo: null,
+    // 商品信息
+    goodsAllInfo: null,
+    // 商品参数详情列表
+    goodsParamsList: null,
+    // 商品规格列表
+    goodsSpecList: null,
+    // 商品规格关系
+    goodsSpecArray: null,
+    // 活动列表
+    activityInfoList: null,
+    // 常见问题内容
+    articleContent: null,
+    // 当前选择活动
+    currentSelectActivity: null,
+    // 当前选中规格数据
+    currentSelectSpec: '',
+    currentSelectSpec1: '',
+    // 当前选中规格数据字符串
+    currentSelectSpecString: null,
+    // 当前购买的商品选择的属性,后期可能为多个产品
+    goodsAttribute: {},
+    // 选中的规格数据
+    specsData: [],
+    // 选中规格后产品详情
+    specsDataInfo: {},
+    // 存储可用规格
+    specArray: [],
+    authorizeType: ['WXLogin', 'AccountInfo', 'UserInfo', 'PhoneNumber'],
+    text: '',
+    amoDisable: false,
+    hotelAdminNo: '',
+    dialogType: 'goods',
+    // 是否是立即购买发起的授权
+    isBuyAuth: true,
+    // 购物车商品数量
+    cartShopTotal: 0,
+    // 商品起订量
+    minOrderNum: 0,
+    // 快捷导航
+    quickLink: false,
+    // 快捷导航切换
+    quickLinkOpen: true,
+    giftDataLength: null
+  }
+  methods = {
+    /**
+     * 分享
+     */
+    onShareAppMessage(res) {
+      var _self = this
+      let hotelAdminNo = wx.getStorageSync(STATUS.HOTEL_ADMIN_NO) || ''
+      return {
+        title: _self.goodsAllInfo.goodsCaption,
+        path:
+          '/pages/goods-detail?id=' +
+          _self.goodsNo +
+          '&hotelAdminNo=' +
+          hotelAdminNo +
+          '&quickLink=true',
+        imageUrl: _self.swiperDataSet[0].imgSrc,
+        success: function(res) {
+          // 转发成功
+        },
+        fail: function(res) {
+          // 转发失败
+        }
+      }
+    }
+  }
+  /**
+   * 快捷导航切换
+   */
+  changeQuickLinkMode() {
+    this.quickLinkOpen = !this.quickLinkOpen
+    this.$apply()
+  }
+  dialogClose() {
+    // for (let item of this.goodsSpecList) {
+    //   for (let itm of item.gategory) {
+    //     itm.checked = false
+    //   }
+    // }
+    // this.currentSelectSpec = ''
+    // this.$apply()
+  }
+  /**
+   * 添加购物车
+   */
+  addShopCart(parme) {
+    let parmes = { ...parme }
+    let productInfo = []
+    productInfo.push({
+      num: this.counterNum, // 选中的商品数量
+      productNo: this.specsDataInfo.productNo // 选中的产品编号
+    })
+    parmes['userNo'] = this.userNo
+    parmes['productList'] = productInfo
+    ShopCartService.shopCartAdd({
+      data: parmes
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          Tips.success('成功，在购物车等您哟~')
+          this.queryCart()
+          for (let item of this.goodsSpecList) {
+            for (let itm of item.gategory) {
+              itm.checked = false
+            }
+          }
+          this.currentSelectSpec = ''
+          this.$invoke('specs-parmeter', 'close')
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 查询购物车
+   */
+  queryCart(parme) {
+    let parmes = { ...parme }
+    parmes['pageNo'] = 1
+    parmes['userNo'] = this.userNo
+    ShopCartService.shopCartPageQuery({
+      data: parmes
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.footDataSet.filter(item => {
+            if (item.key === 'cart') {
+              item.num = (data.totalRows || 0)
+            }
+          })
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 活动选择
+   */
+  activitySelectFn(e) {
+    let dataItem = e.currentTarget.dataset.item
+    this.currentSelectActivity = dataItem
+    let activityId = dataItem.activityNo
+    wepy.navigateTo({
+      url: 'goods-search?activityId=' + activityId + '&noAutoFouce=' + true
+    })
+    this.$apply()
+    this.$invoke('popup-promotion', 'close')
+  }
+
+  /**
+   * 促销弹出框
+   */
+  promotionTap(e) {
+    this.$invoke('popup-promotion', 'open')
+  }
+
+  /**
+   * 详细参数弹出框
+   */
+  parameterTap(e) {
+    this.$invoke('popup-parameter', 'open')
+  }
+
+  /**
+   * 规格弹窗
+   * */
+  specsTap(e) {
+    this.$invoke('specs-parmeter', 'open')
+  }
+
+  /**
+   * 选项卡切换
+   */
+  tabSwitchFn(item, idx, e) {
+    this.currentTab = item
+    this.$apply()
+  }
+
+  /**
+   * 规格数量计数器
+   */
+  reduce(e) {
+    // this.price = (this.startPrice * e).toFixed(2)
+    this.price = this.startPrice
+    this.counterNum = e
+    this.$apply()
+  }
+
+  add(e) {
+    // this.price = (this.startPrice * e).toFixed(2)
+    this.price = this.startPrice
+    this.counterNum = e
+    this.$apply()
+  }
+
+  inputNumber(e) {
+    // this.price = (this.startPrice * e).toFixed(2)
+    this.price = this.startPrice
+    this.counterNum = e
+    this.$apply()
+  }
+
+  blurNumber(e) {
+    if (e < 1) {
+      Tips.error('规格数量最小为1')
+      e = 1
+    }
+    if (e > 9999) {
+      Tips.error('规格数量最大为9999')
+      e = 9999
+    }
+    // this.price = (this.startPrice * e).toFixed(2)
+    this.price = this.startPrice
+    this.counterNum = e
+    this.$apply()
+  }
+  /**
+   * 判断是否选择规格
+   */
+  checkSpecs() {
+    let isChecked = true // isChecked是否选中规格
+    if (
+      this.currentSelectSpec === '' ||
+      this.currentSelectSpec.indexOf('请选择') !== -1
+    ) {
+      Tips.error('请选择商品规格')
+      isChecked = false
+    }
+    return isChecked
+  }
+  /**
+   * 下单或者添加购物车前判断用户是否授权
+   */
+  checkAuth() {
+    let isAuth = true
+    let phoneNumber = wx.getStorageSync(STATUS.PHONE_NUMBER)
+    if (!this.userNo) {
+      this.$invoke('user-authorize', 'authorizeActivation')
+      isAuth = false
+    } else if (!phoneNumber) {
+      this.authorizeType = ['WXLogin', 'AccountInfo', 'UserInfo', 'PhoneNumber']
+      this.$invoke('user-authorize', 'authorizeActivation')
+      isAuth = false
+      this.$apply()
+    }
+    return isAuth
+  }
+  /**
+   * 商品起订量判断
+   */
+  checkCounterNum() {
+    let full = true
+    // 缓存商品信息
+    let goodsInfos = []
+    let goodsInfo = {}
+    // if (this.giftDataLength < this.minOrderNum && this.giftDataLength) {
+    if (this.counterNum < this.minOrderNum) {
+      Tips.error('收货人数量小于起订数量，请重新选择')
+      full = false
+      return false
+    }
+    goodsInfo['counterNum'] = this.counterNum // 选中的商品数量
+    goodsInfo['currentSelectSpec'] = this.currentSelectSpec // 选中的商品描述
+    goodsInfo['goodsNo'] = this.goodsNo // 选中的商品编号
+    goodsInfo['productNo'] = this.specsDataInfo.productNo // 选中的产品编号
+    goodsInfo['price'] = this.specsDataInfo.productPrice || this.startPrice // 选中商品的单价
+    goodsInfos.push(goodsInfo)
+    wx.setStorageSync('SHOP-INFO', goodsInfos)
+    return full
+  }
+  /**
+   * 跳转到订单页面
+   */
+  gotoBuy(e) {
+    this.isBuyAuth = true
+    if (!this.checkSpecs() || !this.checkAuth() || !this.checkCounterNum()) {
+      return false
+    }
+    wepy.navigateTo({ url: 'goods-order' })
+  }
+  /**
+   * 添加购物车事件
+   */
+  addCartFn() {
+    this.isBuyAuth = false
+    if (!this.checkSpecs() || !this.checkAuth() || !this.checkCounterNum()) {
+      return false
+    }
+    this.addShopCart()
+  }
+  // 判断是否已经授权
+
+  /**
+   * 底部按钮点击事件
+   */
+  onFooterItemTapFn(dataset, e) {
+    let _this = this
+    let key = dataset.key
+
+    let checkShop = function() {
+      // if (!_this.currentSelectSpec || _this.currentSelectSpec.indexOf('请选择') !== -1) {
+      //   _this.$invoke('specs-parmeter', 'open')
+      //   return false
+      // }
+      _this.$invoke('specs-parmeter', 'open')
+      return false
+    }
+    if (key === 'buy') {
+      if (!checkShop()) return
+      _this.gotoBuy()
+    }
+    if (key === 'addCart') {
+      if (!checkShop()) return
+      _this.addCartFn()
+    }
+    if (key === 'cart') {
+      wx.navigateTo({ url: 'carts' })
+    }
+    return false
+  }
+
+  /**
+   * 授权完成回调
+   */
+  onAuthorizeAllFn(data) {
+    let _this = this
+    let timer
+    _this.userNo = data.userNo
+    if (timer) {
+      clearTimeout(timer)
+    }
+    if (_this.isBuyAuth) {
+      timer = setTimeout(() => {
+        wepy.navigateTo({
+          url: 'goods-order'
+        })
+        _this.$apply()
+      }, 1200)
+    } else {
+      this.addShopCart()
+    }
+  }
+  onCloseAuthorize() {
+    return false
+  }
+
+  /**
+   * 规格选择
+   */
+  categorySelectFn(dataset, e) {
+    this.specsData = []
+    dataset = dataset || this.goodsSpecList
+    this.currentSelectSpec = dataset
+    let str = ''
+    let str1 = ''
+    Utils.forEach(dataset, item => {
+      // str += '"' + item.value + ':'
+      let specsItem = {}
+      specsItem['specCode'] = item.code
+      let gategory = item.gategory
+      let selGategory = ''
+      Utils.forEach(gategory, gItem => {
+        if (gItem.checked) {
+          selGategory = gItem.name
+          specsItem['valueCode'] = gItem.key
+          return 'break'
+        }
+      })
+      this.specsData.push(specsItem)
+      if (selGategory) {
+        str1 += (selGategory || '请选择') + ';'
+      }
+      str += (selGategory || '请选择') + ';'
+    })
+    this.currentSelectSpec = str
+    this.currentSelectSpec1 = str1
+    this.getSpecs()
+    this.$apply()
+  }
+
+  /**
+   * 获取产品规格
+   */
+  getSpecs() {
+    let currentSelectSpec = this.currentSelectSpec
+    if (currentSelectSpec.indexOf('请选择') !== -1) {
+      return false
+    }
+    let parme = {}
+    parme['specList'] = this.specsData
+    parme['goodsNo'] = this.goodsNo
+    GoodsDetailService.productInfoQuery({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // if (!this.amoDisable) {
+          //   this.counterNum = 1
+          // }
+          this.specsDataInfo = data.productInfo
+          this.specArray = data.specArray
+          // 有规格的时候重新计算单价
+          this.price = data.productInfo.productPrice
+          this.startPrice = data.productInfo.productPrice
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 查询商品详情
+   */
+  goodsInfoQuery() {
+    let params = {
+      goodsNo: this.goodsNo,
+      clientType: 'SHOP_C_MINI'
+    }
+    if (this.userNo) {
+      params['userNo'] = this.userNo
+    }
+    GoodsDetailService.goodsInfoQuery({
+      data: params
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // 商品所有详情
+          let goodsAllInfo = data.goodsAllInfo || {}
+          this.text = data.goodsAllInfo.introduction
+          goodsAllInfo.introduction = goodsAllInfo.introduction.replace(
+            /<img/g,
+            '<img width="100%" style="display:block"'
+          )
+          DataPipe.basePipe(goodsAllInfo)
+
+          this.goodsAllInfo = goodsAllInfo
+          this.price = goodsAllInfo.discountPrice
+          this.startPrice = goodsAllInfo.discountPrice
+          // 商品参数列表
+          this.goodsParamsList = goodsAllInfo.paramList || []
+          // 商品规格
+          this.goodsSpecList = goodsAllInfo.specList || []
+          // 商品规格关系
+          this.goodsSpecArray = goodsAllInfo.specArray || []
+          this.minOrderNum = goodsAllInfo.minOrderNum || 1
+          if (this.giftDataLength < this.minOrderNum) {
+            this.counterNum = goodsAllInfo.minOrderNum || 1
+          } else {
+            this.counterNum = this.giftDataLength
+          }
+          Utils.forEach(this.goodsSpecList, item => {
+            item.gategory = []
+            let options = item.options || {}
+            let i = 0
+            for (let key in options) {
+              let gategoryItem = { key, name: options[key] }
+              if (i === 0) {
+                gategoryItem.checked = false
+              }
+              item.gategory.push(gategoryItem)
+              i++
+            }
+          })
+          // // 设置选中当前规格
+          // this.categorySelectFn()
+          // 商品图片
+          this.swiperDataSet = goodsAllInfo.goodsImgs || []
+          // // 获取商品规格
+          // this.getSpecs()
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+          setTimeout(() => {
+            wx.navigateBack()
+          }, 1000)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+        setTimeout(() => {
+          wx.navigateBack()
+        }, 1000)
+      })
+  }
+
+  /**
+   * 活动列表
+   */
+  goodsActivityQuery() {
+    GoodsDetailService.goodsActivityQuery({
+      data: {
+        clientType: 'SHOP_C_MINI',
+        goodsNo: this.goodsNo
+      }
+    })
+      .then(res => {
+        let activityInfoList = (res.data || {}).activityInfoList || []
+        this.activityInfoList = activityInfoList
+        // 默认选中并展示第一个活动
+        this.currentSelectActivity = activityInfoList[0]
+        this.$apply()
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 商品常见问题
+   */
+  articleQuery() {
+    GoodsDetailService.articleQuery({
+      data: {
+        articleType: 'GOODSFAQ'
+      }
+    })
+      .then(res => {
+        let articleContent = (res.data || {}).content || '暂无'
+        this.articleContent = articleContent
+        this.$apply()
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  onLoad(options) {
+    let scene = (options.scene || '').split('_')
+    let goodsNo = (options || {}).id || scene[1]
+    this.goodsNo = goodsNo
+    let userNo = wepy.getStorageSync(STATUS.USER_NO)
+    let orders = wx.getStorageSync('SHOP-INFO')
+    let giftData = wx.getStorageSync('GIFT_DATA') || ''
+    this.quickLink = options.quickLink === 'true'
+    if (giftData) {
+      this.amoDisable = true
+      this.giftDataLength = giftData.length
+      this.$apply()
+    }
+
+    if (orders) {
+      wx.removeStorageSync('SHOP-INFO')
+    }
+    if (userNo) {
+      this.userNo = userNo
+      this.queryCart()
+    }
+
+    // 获取商品详情
+    this.goodsInfoQuery()
+    // 活动列表
+    this.goodsActivityQuery()
+    // 商品常见问题
+    this.articleQuery()
+  }
+  onShow() {}
+}
+</script>

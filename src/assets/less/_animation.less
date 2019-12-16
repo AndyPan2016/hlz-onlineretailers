@@ -1,0 +1,171 @@
+﻿@charset "utf-8";
+
+/**
+ *
+ * _animation.less
+ *
+ * 动画
+ *
+ * version 1.0.0.0(主版本号.子版本号.编译版本号.修正版本号)
+ *
+ * @author pye-mail@163.com
+ *
+ * create log 2015年6月4日14:56:45
+ *
+ * last update 无
+ *
+ */
+
+
+@import "mixin.less";
+
+.fn-pulse(){
+    0% {
+        .scale3d-all(1);
+    }
+
+    50% {
+        .scale3d-all(1.1);
+    }
+
+    100% {
+        .scale3d-all(1);
+    }
+}
+/**
+ * 脉冲动画(关键帧)
+ * @name 动画名称
+ * @remark 无
+ */
+.animation-frame-pulse(@name: fn-animation){
+    @keyframes @name
+    {
+        .fn-pulse();
+    }
+    /* Safari 和 Chrome */
+    @-webkit-keyframes @name
+    {
+        .fn-pulse();
+    }
+}
+/**
+ * 脉冲动画
+ */
+//定义动画名称
+@animation-name-pulse: animation-active-pulse;
+//创建一个名称为'animation-active-pulse'的脉冲动画
+.animation-frame-pulse(@animation-name-pulse);
+//动画样式设置
+.animation-pulse{
+    //通过动画名称将动画添加到样式中
+    .animation-name(@animation-name-pulse);
+    //设置动画时间(1秒)
+    .animation-duration(1s);
+    //设置动画速度曲线(直线匀速)
+    .animation-timing-function(linear);
+    //动画的播放次数(重复播放)
+    .animation-iteration-count(infinite);
+}
+
+.fn-flip-y(){
+    0% {
+        .rotate3d(0, 1, 0, -360deg);
+    }
+    40% {
+        .translate3d(0, 0, 150px);
+        .rotate3d(0, 1, 0, -190deg);
+    }
+    50% {
+        .translate3d(0, 0, 150px);
+        .rotate3d(0, 1, 0, -170deg);
+    }
+    80% {
+        .scale3d(.95, .95, .95);
+    }
+    100% {
+        .rotate3d(0, 1, 0, -360deg);
+    }
+}
+/**
+ * 翻转(Y)动画(关键帧)
+ * @name 动画名称
+ * @remark 无
+ */
+ .animation-frame-flip-y(@name: fn-animation){
+    @keyframes @name
+    {
+        .fn-flip-y();
+    }
+    /* Safari 和 Chrome */
+    @-webkit-keyframes @name
+    {
+        .fn-flip-y();
+    }
+}
+/**
+ * 翻转(Y)动画
+ */
+//定义动画名称
+@animation-name-flip-y: animation-active-flip-y;
+//创建一个名称为'animation-active-flip-y'的翻转(Y)动画
+.animation-frame-flip-y(@animation-name-flip-y);
+//动画样式设置
+.animation-flip-y{
+    //通过动画名称将动画添加到样式中
+    .animation-name(@animation-name-flip-y);
+    //设置动画时间(1秒)
+    .animation-duration(1s);
+    //设置动画速度曲线(直线匀速)
+    .animation-timing-function(linear);
+    //动画的播放次数(重复播放)
+    .animation-iteration-count(infinite);
+}
+
+.fn-zoomin-down(){
+    0% {
+        .opacity(0);     
+        transform: scale3d(.1, .1, .1) translate3d(0, -1000px, 0);
+        -webkit-animation-timing-function: cubic-bezier(0.550, 0.055, 0.675, 0.190);
+        animation-timing-function: cubic-bezier(0.550, 0.055, 0.675, 0.190);
+    }
+    100% {
+        .opacity(1);      
+        transform: scale3d(1, 1, 1) translate3d(0, 60px, 0);
+        -webkit-animation-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1);
+        animation-timing-function: cubic-bezier(0.175, 0.885, 0.320, 1);
+    }
+}
+/**
+ * 出现动画(关键帧)
+ * @name 动画名称
+ * @remark 无
+ */
+ .animation-frame-zoomin-down(@name: fn-animation){
+    @keyframes @name
+    {
+        .fn-zoomin-down();
+    }
+    /* Safari 和 Chrome */
+    @-webkit-keyframes @name
+    {
+        .fn-zoomin-down();
+    }
+}
+/**
+ * 出现动画
+ */
+//定义动画名称
+@animation-name-zoomin-down: animation-active-zoomin-down;
+//创建一个名称为'animation-active-zoomin-down'的出现动画
+.animation-frame-zoomin-down(@animation-name-zoomin-down);
+//动画样式设置
+.animation-zoomin-down{
+    //通过动画名称将动画添加到样式中
+    .animation-name(@animation-name-zoomin-down);
+    //设置动画时间(1秒)
+    .animation-duration(1s);
+    //设置动画速度曲线(直线匀速)
+    //.animation-timing-function(linear);
+    //动画的播放次数(重复播放)
+    // .animation-iteration-count(infinite);
+}

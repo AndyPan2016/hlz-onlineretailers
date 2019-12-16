@@ -1,0 +1,272 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-07-25 11:46:51
+ * @lastTime: 2019-09-17 10:21:29
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="add-address">
+        <view class="list-col">
+          <text class="text">收货人</text>
+          <input bindinput="valueChange" type="text" class="ui-input" placeholder="请输入收货人姓名" data-name="name" value="{{addressDetail.name}}" />
+        </view>
+        <view class="list-col">
+          <text class="text">联系方式</text>
+          <input bindinput="valueChange" type="number" class="ui-input" placeholder="请输入收货人手机号码" data-name="mobileNo" value="{{addressDetail.mobileNo}}" />
+        </view>
+        <view class="list-col more">
+          <text class="text">所在地区</text>
+          <text class="ui-input" :class="{gary:!addressDetail.province}" @tap="getCity">{{addressDetail.province + addressDetail.city + addressDetail.town || '请选择地址'}}</text>
+        </view>
+        <view class="list-col">
+          <text class="text">详细地址</text>
+          <input bindinput="valueChange" type="text" class="ui-input" data-name="address" placeholder="请输入具体的街道及门牌号" value="{{addressDetail.address}}" />
+        </view>
+        <view class="list-col">
+          <text class="text">默认地址</text>
+          <switch color="#FF4C2F" bindchange="valueChange" data-name="status" checked="{{addressDetail.status === 'YES' ? true : false}}" bindinput="valueChange" />
+        </view>
+      </view>
+      <view class="btn">
+        <view class="submit" @tap="submitAddress">完成</view>
+        <view class="use-wechart" @tap="getwechartAdd">
+          <image class="ui-img" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/wechart.png':''}}"></image>使用微信地址
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { AddressService } from '../services'
+import { STATUS, RESOURCE_PATCH } from '@/configs'
+import { Tips } from '@/utils'
+import navigationBar from '@/components/navigation-bar/index'
+export default class AddressAddpages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  props = {}
+  data = {
+    title: '添加收货地址',
+    theme: 'while',
+    userNo: '',
+    addressDetail: {
+      name: '',
+      mobileNo: '',
+      province: '',
+      city: '',
+      town: '',
+      address: '',
+      status: 'NO'
+    },
+    resourct_path: RESOURCE_PATCH
+  }
+  components = {
+    navigationBar
+  }
+  onLoad(option) {
+    let address = option.address || ''
+    if (address) {
+      this.addressDetail = JSON.parse(address)
+    }
+  }
+  onHide() {
+    wx.removeStorageSync('ADDRESS')
+    this.$apply()
+  }
+  valueChange(e) {
+    let _self = this
+    let dataset = e.currentTarget.dataset
+    let value = e.detail.value
+    let name = dataset.name
+    _self.addressDetail[name] = value
+    if (name === 'status') {
+      _self.addressDetail[name] = value ? 'YES' : 'NO'
+    }
+    _self.$apply()
+  }
+  onShow() {
+    let userNo = wepy.getStorageSync(STATUS.USER_NO)
+    let address = wx.getStorageSync('ADDRESS')
+    if (userNo) {
+      this.userNo = userNo
+    }
+    if (address) {
+      this.addressDetail['province'] = address[0]
+      this.addressDetail['city'] = address[1]
+      this.addressDetail['town'] = address[2]
+    }
+    this.$apply()
+    wx.removeStorageSync('ADDRESS')
+  }
+  methods = {
+    // 添加或者修改收货地址
+    submitAddress() {
+      let mobileNo = this.addressDetail.mobileNo
+      if (!this.addressDetail.name) {
+        Tips.error('请填写收货人姓名')
+        return false
+      } else if (!mobileNo) {
+        Tips.error('请输入手机号')
+        return false
+      } else if (
+        !/^(13[0-9]|14[5-9]|15[012356789]|166|17[0-8]|18[0-9]|19[8-9])[0-9]{8}$/.test(
+          mobileNo
+        )
+      ) {
+        Tips.error('手机格式错误')
+        return false
+      } else if (
+        !this.addressDetail.province ||
+        !this.addressDetail.city ||
+        !this.addressDetail.town ||
+        !this.addressDetail.address
+      ) {
+        Tips.error('请完善地址信息')
+        return false
+      }
+      let parmes = Object.assign({}, this.addressDetail)
+      parmes['userNo'] = this.userNo
+      parmes['isDefault'] = parmes.status || 'NO'
+      AddressService.addressUpdate({ data: parmes })
+        .then(res => {
+          let data = res.data
+          if (data.success) {
+            let ctmCheckAddress = data.apiAddressInfo
+            wx.setStorageSync('ADDRESS-DETAIL', ctmCheckAddress)
+            wepy.navigateBack({ delta: 1 })
+          } else {
+            Tips.error(res.message)
+          }
+        })
+        .catch(err => {
+          Tips.error(err.message)
+        })
+    },
+    getCity() {
+      let address = []
+      address[0] = this.addressDetail.province || ''
+      address[1] = this.addressDetail.city || ''
+      address[2] = this.addressDetail.town || ''
+      wepy.navigateTo({
+        url: 'address-city?address=' + address
+      })
+    },
+    // 获取微信地址
+    getwechartAdd() {
+      let _self = this
+      wx.chooseAddress({
+        success(res) {
+          _self.addressDetail['name'] = res.userName || ''
+          _self.addressDetail['mobileNo'] = res.telNumber || ''
+          _self.addressDetail['province'] = res.provinceName || ''
+          _self.addressDetail['province'] = res.provinceName || ''
+          _self.addressDetail['city'] = res.cityName || ''
+          _self.addressDetail['town'] = res.countyName || ''
+          _self.addressDetail['address'] = res.detailInfo || ''
+          _self.$apply()
+        }
+      })
+    }
+  }
+}
+</script>
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+.add-address {
+  margin-top: 2rpx;
+  background: @color-ffffff;
+  .list-col {
+    margin-left: 30rpx;
+    height: 100rpx;
+    line-height: 100rpx;
+    border-bottom: 1px solid @color-eeeeee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 30rpx;
+    &.more {
+      &::after {
+        background: url('@{base64-icon-mapright}') 100% center no-repeat;
+        background-size: auto 30rpx;
+        content: '';
+        display: block;
+        flex: 0 0 auto;
+        height: 50rpx;
+        width: 50rpx;
+      }
+    }
+    &:last-child {
+      border-bottom: 0;
+    }
+    .text {
+      font-size: 28rpx;
+      color: @color-222222;
+      flex: 0 0 auto;
+      width: 140rpx;
+    }
+    .ui-input {
+      flex: 1 0 auto;
+      width: 50%;
+      font-size: 28rpx;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      &.gary {
+        color: @color-888888;
+      }
+    }
+  }
+}
+.btn {
+  .submit {
+    height: 100rpx;
+    font-size: 32rpx;
+    color: @color-ffffff;
+    background: @color-C50F0F;
+    text-align: center;
+    line-height: 100rpx;
+    margin: 60rpx 30rpx 30rpx 30rpx;
+  }
+  .use-wechart {
+    font-size: 28rpx;
+    text-align: center;
+    line-height: 36rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .ui-img {
+      width: 44rpx;
+      height: 36rpx;
+      margin-right: 12rpx;
+    }
+  }
+}
+.add-picker {
+  height: 100rpx;
+}
+</style>

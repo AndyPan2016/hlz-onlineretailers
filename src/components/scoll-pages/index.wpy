@@ -1,0 +1,50 @@
+<template>
+  <view class="scoll-list">
+    <scroll-view class="list" scroll-y="true" style="{{'transform: translateY('+ MoveY +'rpx)'}}" bindtouchstart="start_fn" bindtouchmove="move_fn" bindtouchend="end_fn">
+      <slot name="contant">123</slot>
+    </scroll-view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class scollPagesComponent extends wepy.component {
+  props = {
+    startFn: Function,
+    moveFn: Function,
+    endFn: Function
+  }
+  methods = {
+    start_fn(e) {
+      let start = e.changedTouches[0]
+      if (this.startFn) {
+        this.startFn.call(this.$parent, start, e)
+      }
+      this.$emit('startFn', start)
+    },
+    move_fn(e) {
+      let move = e.changedTouches[0]
+      if (this.moveFn) {
+        this.moveFn.call(this.$parent, move, e)
+      }
+      this.$emit('moveFn', move)
+    },
+    end_fn(e) {
+      let end = e.changedTouches[0]
+      if (this.endFn) {
+        this.endFn.call(this.$parent, end, e)
+      }
+      this.$emit('endFn', end)
+    }
+  }
+}
+</script>
+<style lang="less">
+.scoll-list {
+  width: 100%;
+  height: 100%;
+  .list {
+    height: 100%;
+    width: 100%;
+  }
+}
+</style>

@@ -1,0 +1,99 @@
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="help-detail-hd">
+        {{questionName}}
+      </view>
+      <view class="help-detail-bd">
+        <rich-text nodes="{{questionInfo}}"></rich-text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { MyInfoService } from '../services'
+import { Tips } from '@/configs'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class helpPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    questionInfo: '',
+    questionNo: '',
+    questionName: '',
+    title: '问题详情',
+    theme: 'while'
+  }
+  components = {
+    navigationBar
+  }
+  goAddress() {
+    wepy.navigateTo({ url: 'address-list' })
+  }
+  getDetail(parmes) {
+    let parme = Object.assign({}, parmes)
+    parme['questionNo'] = this.questionNo
+    MyInfoService.helpFaqInfo({ data: parme }).then(res => {
+      if (res.data.success) {
+        this.questionInfo = res.data.answer
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  onLoad(options) {
+    this.questionNo = options.questionNo
+    this.questionName = options.questionName
+  }
+  onShow() {
+    if (this.questionNo) {
+      this.getDetail()
+    }
+  }
+}
+</script>
+
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    background: #ffffff;
+    .help-detail-hd {
+      font-size: 28rpx;
+      color: @color-222222;
+      height: 80rpx;
+      line-height: 80rpx;
+      margin: 0 20rpx;
+      border-bottom: 1px solid @color-eeeeee;
+    }
+    .help-detail-bd {
+      padding: 30rpx;
+      box-sizing: border-box;
+      color: @color-888888;
+      font-size: 28rpx;
+    }
+  }
+}
+</style>

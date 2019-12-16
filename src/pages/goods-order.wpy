@@ -1,0 +1,817 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-08-01 11:46:34
+ * @lastTime: 2019-10-24 16:18:36
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <address :addressData.sync="addressData"></address>
+      <view class="shop-list">
+        <view class="list-text">商品清单</view>
+        <view wx:for="{{freightInfo}}" class="list">
+          <repeat wx:for="{{item.goodsBuyInfoList}}" wx:key="{{index}}">
+            <shop-list :shopData="item"></shop-list>
+          </repeat>
+          <view class="delivery" wx:if="{{item.distributeInfo.length>0 && isSupportFreight==='YES'}}">
+            <view class="col-l">配送</view>
+            <view class="col-r" @tap="logisticsTap" wx:for="{{item.distributeInfo}}" wx:if="{{itm.active}}" wx:for-item="itm" wx:for-index="idx" data-index="{{index}}" data-item="{{item.distributeInfo}}">
+              {{itm.distributeType+(itm.feePaymentType==='ARRIVE_PAY'?' 预估':'')+(itm.freightFee>0?'￥'+itm.freightFee:'')+'('+(itm.freightFee>0?freightCode[itm.feePaymentType]:'包邮')+')'}}
+            </view>
+          </view>
+          <view class="sub-amount" wx:if="{{isSupportFreight==='YES'}}">
+            <view class="col-l">小计</view>
+            <view class="col-r">￥{{item.totalPrice || 0}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="leave-msg">
+        <text class="text">留言</text>
+        <input bindinput="leaveMsg" value="{{leaveMsg}}" class="msginput" placeholder-class="msg-input-placeholder" placeholder="请输入与客服沟通后的信息" />
+      </view>
+      <view class="amont-count">
+        <view class="list shop">
+          <text class="col-l">商品金额</text>
+          <text class="col-r">￥{{goodsPrice}}</text>
+        </view>
+        <view class="list shop">
+          <text class="col-l">运费</text>
+          <text class="col-r">+￥{{freighTotalPrice}}</text>
+        </view>
+        <view class="list discount">
+          <text class="col-l">优惠金额</text>
+          <text class="col-r">-￥{{totalDiscountMoney}}</text>
+        </view>
+      </view>
+      <view class="goods-submit">
+        <view class="col-l">
+          应付：
+          <text class="price">￥{{orderTotalPrice}}</text>
+        </view>
+        <view class="col-r" @tap="submitOrder">提交并付款</view>
+      </view>
+    </view>
+    <customized-popup title="提示" buttonText="嗯，我知道了" :message.sync="logmsg"></customized-popup>
+    <popup-logistics type="downup" title="配送方式" titleTextAlign="left" titleBorder="bottom" :isCustomContent="isCustomContent" :isTapMaskClose="isTapMaskClose">
+      <view slot="popup-body-cont-wrap" class="logistics">
+        <view class="ui-repeart">
+          <radio-group bindchange="logisticsChange">
+            <view class="repeart-item" wx:for="{{checkFreight}}" wx:key="{{index}}">
+              <label class="radio">
+                <view class="infos">
+                  <text class="ui-text">{{item.distributeType+ (item.feePaymentType==='ARRIVE_PAY'?' 预估':'')+(item.freightFee>0?'￥'+item.freightFee:'')+'('+(item.freightFee>0?(freightCode[item.feePaymentType] ? (freightCode[item.feePaymentType] + '包邮') : ''):'')+')'}}</text>
+                </view>
+                <radio checked="{{item.active}}" value="{{item.distributeTypeNo}}" color="#c50f0f" class="logistics-radio" />
+              </label>
+            </view>
+          </radio-group>
+        </view>
+        <view class="ui-btn" @tap="subFreight">确定</view>
+      </view>
+    </popup-logistics>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { AddressService, GoodsDetailService, MyOrderService } from '../services'
+import { Tips } from '@/utils'
+import { STATUS } from '@/configs'
+import { timesFormate } from '@/utils/times.js'
+import CustomizedPopupComponent from '@/components/customized-popup-component/index'
+import PopupComponent from '@/components/popup-component/index'
+import Address from './components/add-address-component/index'
+import ShopList from './components/shop-list-component/index'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class GoodsOrderPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  components = {
+    address: Address,
+    'shop-list': ShopList,
+    'customized-popup': CustomizedPopupComponent,
+    'popup-logistics': PopupComponent,
+    navigationBar
+  }
+  data = {
+    title: '填写订单',
+    theme: 'while',
+    userNo: '',
+    // 商品信息
+    shopInfo: {},
+    // 商品数量
+    counterNum: 0,
+    // 地址数据
+    addressData: [],
+    // 留言内容
+    leaveMsg: '',
+    // 折扣总金额
+    totalDiscountMoney: '',
+    // 购买货物列表
+    buyProductsList: [],
+    // 邮费
+    freight: '',
+    // 获取商品满减商品列表
+    goodsInfoList: [],
+    authorizeType: ['WXLogin', 'AccountInfo', 'UserInfo'],
+    // 订单编号
+    goodsOrderNo: '',
+    giftData: null,
+    giftAddress: [],
+    hotelAdminNo: '',
+    isCustomContent: true,
+    // 伴手礼多地址邮费查询
+    giftMoreAddress: [],
+    freightGoodsInfo: [],
+    // 可选运费模板列表
+    freightInfo: [],
+    // 选中的邮费模板id
+    freightNo: '',
+    // 单个运费产品组小计
+    totalItem: 0,
+    // 是否支持收货
+    isSupportFreight: 'YES',
+    // 运费支付方式CODE
+    freightCode: {
+      ONLINE_PAY: '在线支付',
+      ARRIVE_PAY: '到付'
+    },
+    noSupportMsg: '',
+    logmsg: '该商品无法送达您所提供的地址，我们表示非常抱歉',
+    shopPageData: [],
+    // 选中的运费配送
+    checkFreight: [],
+    // 选中的物流列表
+    checkFreightIdx: 0,
+    // 商品总金额
+    goodsPrice: 0,
+    freighTotalPrice: 0,
+    orderTotalPrice: 0,
+    // 购物车ID
+    cartId: []
+  }
+  onLoad(option) {
+    wx.removeStorageSync('ADDRESS-DETAIL')
+    this.hotelAdminNo = wx.getStorageSync(STATUS.HOTEL_ADMIN_NO) || ''
+    this.giftData = wx.getStorageSync('GIFT_DATA') || ''
+    if (this.giftData) {
+      this.getGiftAddress()
+    }
+    this.$apply()
+  }
+  onShow() {
+    let timer
+    this.userNo = wepy.getStorageSync(STATUS.USER_NO) || ''
+    this.onPageData()
+    if (timer) {
+      clearTimeout(timer)
+    }
+    timer = setTimeout(() => {
+      this.showLogisticInfo()
+    }, 500)
+  }
+  onHide() {}
+  computed = {
+    valueFormat() {
+      this.goodsPrice = 0
+      this.freighTotalPrice = 0
+      for (let item of this.freightInfo) {
+        this.goodsPrice = Number(item.total) + Number(this.goodsPrice)
+        this.freighTotalPrice =
+          Number(item.freight) + Number(this.freighTotalPrice)
+      }
+      this.goodsPrice = Number(this.goodsPrice).toFixed(2)
+      this.freighTotalPrice = Number(this.freighTotalPrice).toFixed(2)
+      this.orderTotalPrice = (
+        Number(this.goodsPrice) +
+        Number(this.freighTotalPrice) -
+        Number(this.totalDiscountMoney)
+      ).toFixed(2)
+    }
+  }
+  // 获取缓存的商品列表里面的商品信息
+  getGoodsInStorage(key) {
+    let checkEdiItem = {}
+    this.shopInfo.forEach(item => {
+      if (item.productNo === key) {
+        checkEdiItem = item
+      }
+    })
+    return checkEdiItem
+  }
+  // 展示不同的物流信息
+  showLogisticInfo() {
+    let parme = {}
+    parme['userNo'] = this.userNo
+    parme['goodsBuyInfoList'] = []
+    if (this.addressData.length > 0) {
+      parme['destinationCity'] = this.addressData[0].city
+      parme['destinationProvince'] = this.addressData[0].province
+    }
+    if (this.giftMoreAddress.length > 0) {
+      parme['addressList'] = this.giftMoreAddress
+    }
+    this.shopInfo.forEach(item => {
+      parme['goodsBuyInfoList'].push({
+        goodsNo: item.goodsNo,
+        num: item.counterNum,
+        productNo: item.productNo
+      })
+    })
+    GoodsDetailService.orderConfirm({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.freight = 0
+          this.isSupportFreight = data.isSupport
+          this.freightInfo = data.goodsFreightInfoList || []
+          this.freightInfo.forEach(item => {
+            item['total'] = 0
+            // 商品信息处理
+
+            if (item.goodsBuyInfoList.length > 0) {
+              item.goodsBuyInfoList.forEach(itm => {
+                let itemGoods = this.getGoodsInStorage(itm.productNo)
+                itm.price = itemGoods.price
+                itm.des = itemGoods.currentSelectSpec
+                itm.productNo = itemGoods.productNo
+                item['total'] =
+                  Number(item['total']) + Number(itm.price) * itm.num
+              })
+            }
+
+            if (this.isSupportFreight === 'NO') {
+              item.distributeInfo = [{freightFee: '0', distributeType: ''}]
+            }
+            // 物流信息处理
+            if (item.distributeInfo.length > 0) {
+              item.distributeInfo[0]['active'] = true
+              if (item.distributeInfo[0].feePaymentTypeCode === 'ARRIVE_PAY') {
+                let freight = 0
+                item['freight'] = freight.toFixed(2)
+                this.$apply()
+              } else {
+                this.freight += Number((item.distributeInfo[0] || {}).freightFee || 0)
+                item['freight'] = (item.distributeInfo[0] || {}).freightFee || 0
+              }
+            }
+            item['total'] = item['total'].toFixed(2)
+            item['totalPrice'] = (
+              Number(item['total']) + Number(item['freight'])
+            ).toFixed(2)
+          })
+          if (this.isSupportFreight !== 'YES') {
+            let freight = 0
+            this.freighTotalPrice = freight.toFixed(2)
+            this.noSupportMsg = data.notSupportAdds[0]
+            this.logmsg =
+              '该商品无法送达' + this.noSupportMsg + '，我们表示非常抱歉'
+            this.$invoke('customized-popup', 'open')
+            this.$apply()
+            return false
+          }
+          this.$apply()
+        } else {
+          this.freighTotalPrice = 0.0
+          this.freightInfo = []
+          Tips.error(res.message)
+          this.$apply()
+        }
+      }).catch(() => {
+        let freight = 0
+        this.freighTotalPrice = freight.toFixed(2)
+        this.freightInfo = []
+        this.$apply()
+      })
+  }
+  // 物流弹窗
+  logisticsTap(e) {
+    this.checkFreight = e.currentTarget.dataset.item
+    this.checkFreightIdx = e.currentTarget.dataset.index
+    this.$invoke('popup-logistics', 'open')
+  }
+  // 选择物流
+  logisticsChange(e) {
+    this.freightNo = e.detail.value
+    this.$apply()
+  }
+  subFreight() {
+    if (this.freightNo && this.checkFreightIdx > -1) {
+      for (let item of this.freightInfo[this.checkFreightIdx].distributeInfo) {
+        item.active = false
+        if (item.distributeTypeNo === this.freightNo) {
+          item.active = true
+          if (item.feePaymentTypeCode !== 'ONLINE_PAY') {
+            let freight = 0
+            this.freightInfo[this.checkFreightIdx].freight = freight.toFixed(2)
+          } else {
+            this.freightInfo[this.checkFreightIdx].freight = Number(
+              item.freightFee || 0
+            ).toFixed(2)
+          }
+        }
+      }
+      let freight = this.freightInfo[this.checkFreightIdx]['freight']
+      let total = this.freightInfo[this.checkFreightIdx]['total']
+      this.freightInfo[this.checkFreightIdx]['totalPrice'] = (
+        Number(freight) + Number(total)
+      ).toFixed(2)
+      this.$apply()
+    }
+    this.$invoke('popup-logistics', 'close')
+    this.freightNo = ''
+    this.$apply()
+  }
+  // 获取默认收货地址
+  getDefaultAddress(parme) {
+    AddressService.addressQueryIsDefault({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success && data.addressInfos) {
+          this.addressData = []
+          data.addressInfos.mobileNo = timesFormate.phoneFormate(
+            data.addressInfos.mobileNo
+          )
+          this.addressData.push(data.addressInfos)
+          this.$apply()
+        } else {
+          this.addressData = []
+          Tips.error('默认收货地址为空')
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  // 获取折扣
+  getDiscount() {
+    let parme = {}
+    if (this.shopInfo) {
+      parme['goodsInfoList'] = []
+      for (let item of this.shopInfo) {
+        parme['goodsInfoList'].push({
+          price: item.price,
+          count: item.counterNum,
+          goodsNo: item.goodsNo
+        })
+      }
+    }
+    parme['clientType'] = 'SHOP_C_MINI'
+    GoodsDetailService.activityCalculate({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.totalDiscountMoney = data.reduceTotalAmount || 0.0
+          this.$apply()
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  // 创建支付订单
+  createOrderPay(parmes) {
+    let parme = Object.assign({}, parmes)
+    let _self = this
+    // 运费模板判断
+    if (this.freightInfo.length > 0) {
+      parme['buyProductsInfos'] = []
+      let distributeTypeNo = null
+      for (let idx in this.freightInfo) {
+        for (let item of this.freightInfo[idx]['distributeInfo']) {
+          if (item.active) {
+            distributeTypeNo = item.distributeTypeNo
+          }
+        }
+        for (let item of this.freightInfo[idx]['goodsBuyInfoList']) {
+          parme['buyProductsInfos'].push({
+            productCount: item.num,
+            productNo: item.productNo,
+            distributeTypeNo: distributeTypeNo
+          })
+        }
+      }
+    }
+    // 是否是购物车过来
+    if (this.cartId.length) {
+      parme['shoppingCartIdList'] = this.cartId
+    }
+    parme['leaveWord'] = this.leaveMsg
+    parme['clientType'] = 'SHOP_C_MINI'
+    parme['discountAmount'] = this.totalDiscountMoney
+    parme['freightAmount'] = this.freighTotalPrice
+    parme['goodsAmount'] = this.goodsPrice
+    parme['orderAmount'] = this.orderTotalPrice
+    parme['userNo'] = this.userNo
+    if (!this.giftData) {
+      parme['receiverNo'] = this.addressData[0].receiverNo
+    }
+    if (this.hotelAdminNo) {
+      parme['clientMerchantNo'] = this.hotelAdminNo.toString()
+    }
+
+    MyOrderService.createOrderPay({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          if (this.hotelAdminNo) {
+            wx.removeStorageSync(STATUS.HOTEL_ADMIN_NO)
+          }
+          this.goodsOrderNo = data.goodsOrderNo
+          // 订单创建成功后，调用支付接口
+          _self.doPay({ goodsOrderNo: data.goodsOrderNo })
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  // 支付接口
+  doPay(parme) {
+    let _self = this
+    parme = parme || {}
+    parme['payType'] = 'WEIXIN_JS'
+    parme['openid'] = wepy.getStorageSync(STATUS.OPEN_ID)
+    MyOrderService.orderPay({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // 订单提交成功发起微信支付
+          let payparme = JSON.parse(data.payInfo)
+          wx.requestPayment({
+            timeStamp: payparme.jsTimeStamp,
+            nonceStr: payparme.jsNonceStr,
+            package: payparme.jsPackage,
+            signType: payparme.signType,
+            paySign: payparme.sign,
+            success(res) {
+              wx.removeStorageSync('GIFT_DATA')
+              // 订单支付成功，跳转到我的订单页面
+              wepy.redirectTo({
+                url: 'order-detail?goodsOrderNo=' + _self.goodsOrderNo
+              })
+            },
+            fail(res) {
+              wx.removeStorageSync('GIFT_DATA')
+              _self.cancelOrder({ payOrderNo: data.payOrderNo })
+            }
+          })
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  // 取消订单
+  cancelOrder(parme) {
+    MyOrderService.orderCanclePay({
+      data: parme
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // 订单取消支付，跳转到我的订单页面
+          wepy.redirectTo({
+            url: 'order-detail?goodsOrderNo=' + this.goodsOrderNo
+          })
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 加载页面数据
+   */
+  onPageData() {
+    // 获取地址信息
+    let addressData = wx.getStorageSync('ADDRESS-DETAIL') || ''
+    this.shopInfo = wx.getStorageSync('SHOP-INFO') || []
+    if (this.shopInfo) {
+      let data = {}
+      this.buyProductsList = []
+      // 获取编码和货物数量
+      data['productCount'] = this.shopInfo.counterNum
+      data['productNo'] = this.shopInfo.productNo
+      this.goodsInfoList = []
+      this.goodsInfoList.push({
+        price: Number(this.shopInfo.price),
+        count: this.shopInfo.counterNum,
+        goodsNo: this.shopInfo.goodsNo
+      })
+      this.buyProductsList.push(data)
+      for (let item of this.shopInfo) {
+        if (item.cartId) {
+          this.cartId.push(item.cartId)
+        }
+      }
+      this.$apply()
+    }
+    if (!this.giftData) {
+      if (addressData) {
+        this.addressData = []
+        addressData.mobileNo = timesFormate.phoneFormate(addressData.mobileNo)
+        this.addressData.push(addressData)
+      } else {
+        this.getDefaultAddress({ userNo: this.userNo })
+      }
+    }
+    this.getDiscount()
+    this.$apply()
+  }
+
+  /**
+   * 伴手礼收货地址列表查询
+   */
+  getGiftAddress() {
+    GoodsDetailService.shopInvitationGiftQuery({
+      data: {
+        ids: this.giftData
+      }
+    })
+      .then(res => {
+        let result = res.data
+        if (result.success) {
+          let data = result.invitationGiftInfos || []
+          for (let item of data) {
+            let str = ''
+            this.giftAddress.push({
+              city: item.city,
+              productCount: item.quantity,
+              consigneeNo: item.consigneeUserNo,
+              address: item.address,
+              town: item.district,
+              zipCode: '',
+              province: item.province,
+              invitationId: item.invitationId,
+              mobileNo: item.mobileNo,
+              consignee: item.realName
+            })
+            str += item.province + ',' + item.city
+            this.giftMoreAddress.push(str)
+          }
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  methods = {
+    leaveMsg(e) {
+      let msg = e.detail.value
+      this.leaveMsg = msg
+      this.$apply()
+    },
+    submitOrder() {
+      if (this.isSupportFreight !== 'YES') {
+        this.logmsg =
+          '该商品无法送达' + this.noSupportMsg + '，我们表示非常抱歉'
+        this.$invoke('customized-popup', 'open')
+        return false
+      }
+      if (this.giftData) {
+        this.createOrderPay({
+          goodsOrderType: 'MULTIPLE_ADDRESS',
+          apiGoodsOrderReceiverInfos: this.giftAddress
+        })
+      } else {
+        if (this.addressData.length < 1) {
+          Tips.error('请输入收货地址')
+        } else {
+          this.createOrderPay()
+          // this.$invoke('customized-popup', 'open')
+        }
+      }
+    }
+  }
+}
+</script>
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    height: 50vh;
+    flex: 1 0 auto;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+  .shop-list {
+    margin-bottom: 20rpx;
+    .list-text {
+      height: 88rpx;
+      line-height: 88rpx;
+      font-size: 28rpx;
+      color: @color-888888;
+      padding-left: 30rpx;
+      border-bottom: 1px solid @color-eeeeee;
+      background: @color-ffffff;
+    }
+    .list {
+      margin-bottom: 20rpx;
+      overflow: hidden;
+      background: @color-ffffff;
+    }
+    .delivery {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid @color-eeeeee;
+      height: 100rpx;
+      line-height: 100rpx;
+      margin: 0 30rpx;
+      .col-l {
+        font-size: 28rpx;
+        color: @color-555555;
+      }
+      .col-r {
+        font-size: 28rpx;
+        color: @color-555555;
+        position: relative;
+        padding-right: 30rpx;
+        &::after {
+          background: url('@{base64-icon-mapright}') 100% center no-repeat;
+          background-size: auto 30rpx;
+          content: '';
+          display: block;
+          height: 100rpx;
+          width: 50rpx;
+          position: absolute;
+          right: 0;
+          top: 0;
+        }
+      }
+    }
+    .sub-amount {
+      display: flex;
+      justify-content: space-between;
+      height: 100rpx;
+      line-height: 100rpx;
+      margin: 0 30rpx;
+      .col-l {
+        font-size: 28rpx;
+        color: @color-555555;
+      }
+      .col-r {
+        font-size: 30rpx;
+        color: @color-555555;
+        font-family: 'Bahnschrift';
+        color: @color-C50F0F;
+        font-weight: bold;
+      }
+    }
+  }
+  .leave-msg {
+    height: 88rpx;
+    line-height: 88rpx;
+    background: @color-ffffff;
+    padding: 0 30rpx;
+    color: #555555;
+    font-size: 28rpx;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20rpx;
+    .text {
+      margin-right: 30rpx;
+      flex: 0 0 auto;
+    }
+    .msginput {
+      flex: 1 0 auto;
+      width: 50%;
+      height: 100%;
+      position: relative;
+      z-index: 10;
+    }
+    .msg-input-placeholder {
+      color: @color-cccccc;
+    }
+  }
+  .amont-count {
+    background: @color-ffffff;
+    padding: 36rpx 30rpx;
+    margin-bottom: 100rpx;
+    .list {
+      overflow: hidden;
+      font-size: 28rpx;
+      color: #555555;
+      margin-bottom: 20rpx;
+      &.discount {
+        .col-r {
+          color: @color-C50F0F;
+        }
+      }
+      .col-l {
+        width: 50%;
+        float: left;
+        text-align: left;
+      }
+      .col-r {
+        float: right;
+        width: 50%;
+        text-align: right;
+        font-family: 'Bahnschrift';
+      }
+    }
+  }
+  .goods-submit {
+    height: 100rpx;
+    line-height: 100rpx;
+    background: @color-ffffff;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    z-index: 100;
+    box-shadow: 0 0 20px rgba(124,124,124,0.1);
+    .col-l {
+      font-size: 32rpx;
+      color: @color-222222;
+      padding-left: 30rpx;
+      width: 50%;
+      flex: 1 0 auto;
+      .price {
+        font-weight: bold;
+        color: @color-C50F0F;
+        font-family: 'Bahnschrift';
+      }
+    }
+    .col-r {
+      width: 280rpx;
+      text-align: center;
+      flex: 0 0 auto;
+      font-size: 32rpx;
+      color: @color-ffffff;
+      background: @color-C50F0F;
+    }
+  }
+  .logistics {
+    .repeart-item {
+      border-bottom: 1px solid @color-eeeeee;
+      margin: 0 30rpx;
+      .radio {
+        display: flex;
+        align-items: center;
+        padding: 30rpx 0;
+        flex: 1 0 auto;
+        width: 100%;
+        .infos {
+          flex: 1 0 auto;
+          width: 50%;
+          .ui-text {
+            flex: 1 0 auto;
+            width: 50%;
+            line-height: 40rpx;
+            font-size: 28rpx;
+            color: @color-222222;
+          }
+        }
+        .logistics-radio {
+          flex: 0 0 auto;
+          .wx-radio-input {
+            height: 32rpx;
+            width: 32rpx;
+          }
+        }
+      }
+    }
+
+    .ui-btn {
+      width: 100%;
+      height: 100rpx;
+      line-height: 100rpx;
+      text-align: center;
+      font-size: 32rpx;
+      color: @color-ffffff;
+      background: @color-C50F0F;
+    }
+  }
+}
+</style>

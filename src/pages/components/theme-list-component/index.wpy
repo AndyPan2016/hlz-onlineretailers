@@ -1,0 +1,87 @@
+<!--
+ * @Description: 主题列表
+ * @Author: huyanhai
+ * @since: 2019-08-13 14:27:38
+ * @lastTime: 2019-09-06 17:14:35
+ -->
+<template>
+  <view class="theme-item" wx:for="{{themeList}}" data-item="{{item}}" @tap="toDetail">
+    <view class="item-left">
+      <image class="ui-img" mode="aspectFill" src="{{item.coverImage}}" />
+    </view>
+    <view class="item-right">
+      <view class="item-name">{{item.goodsCaption}}</view>
+      <view class="item-text">{{item.describes}}</view>
+      <view class="item-price">￥{{item.price}}</view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class themeItemComponent extends wepy.component {
+  props = {
+    themeList: {
+      type: Array
+    }
+  }
+  data = {}
+  methods = {
+    toDetail(e) {
+      let goodsNo = e.currentTarget.dataset.item.goodsNo
+      wx.navigateTo({ url: 'goods-detail?id=' + goodsNo })
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+@import '../../../assets/less/mixin.less';
+.theme-item {
+  background: @color-ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 30rpx;
+  display: flex;
+  margin-bottom: 20rpx;
+  &:last-child {
+    margin-bottom: 0;
+  }
+  .item-left {
+    width: 300rpx;
+    height: 300rpx;
+    background: gray;
+    flex: 0 0 auto;
+    .ui-img {
+      width: 300rpx;
+      height: 300rpx;
+    }
+  }
+  .item-right {
+    flex: 1 0 auto;
+    width: 50%;
+    margin-left: 40rpx;
+    .item-name {
+      font-size: 26rpx;
+      color: @color-222222;
+      line-height: 40rpx;
+      max-height: 80rpx;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-text {
+      font-size: 24rpx;
+      color: @color-888888;
+      line-height: 40rpx;
+      margin: 20rpx 0;
+      max-height: 120rpx;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-price {
+      font-size: 32rpx;
+      color: @color-C50F0F;
+      font-family: 'Bahnschrift';
+    }
+  }
+}
+</style>

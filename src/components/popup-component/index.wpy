@@ -1,0 +1,236 @@
+<!--
+  弹出框组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年4月24日17:18:14
+  @LastUpdateDate: 2019年4月24日17:18:17
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.popup-component {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  z-index: 1000;
+
+  &:before {
+    content: '';
+    display: inline-block;
+    vertical-align: middle;
+    height: 100%;
+  }
+
+  // 打开弹出框
+  &.open-before {
+    display: block;
+  }
+  &.open {
+    display: block;
+    z-index: 1000;
+    .opacity(1);
+
+    .popup-mask {
+      .opacity(0.5);
+    }
+    .popup-main {
+      .box-shadow(0 0 20px rgba(0, 0, 0, 1));
+      .opacity(1);
+      &.popup {
+        .scale-all(1);
+      }
+      &.downup {
+        bottom: 0;
+      }
+    }
+  }
+
+  // 关闭弹出框之前过度
+  &.close {
+    display: none;
+    z-index: -1;
+    .opacity(0);
+  }
+
+  // 背景遮罩层
+  .popup-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    z-index: -1;
+    .opacity(0);
+    .transition(all 0.3s ease);
+  }
+
+  // 弹出框主体
+  .popup-main {
+    text-align: left;
+    overflow: hidden;
+    .box-shadow(0 0 20px rgba(0, 0, 0, 0.2));
+    background: #fff;
+    .opacity(0.2);
+    .transition(all 0.3s ease);
+
+    // 普通弹出框
+    &.popup {
+      display: inline-block;
+      width: 90%;
+      vertical-align: middle;
+      .border-radius(10rpx);
+      .scale-all(0.2);
+    }
+    // 从底部往上弹出
+    &.downup {
+      display: block;
+      width: 100%;
+      // max-height: 80%;
+      .border-top-radius(10rpx);
+      position: absolute;
+      bottom: -100%;
+      left: 0;
+
+      &:before {
+        display: none;
+      }
+      .popup-body {
+        max-height: 1000rpx;
+        overflow: auto;
+        overflow-y: auto;
+
+        &:before {
+          display: none;
+        }
+      }
+    }
+
+    // 弹出框头部
+    .popup-head {
+      @headHeight: 80rpx;
+
+      height: @headHeight;
+      // border-bottom: 2rpx solid #ddd;
+      position: relative;
+
+      &.title-textalign-center {
+        .popup-head-title {
+          right: 10rpx;
+          text-align: center;
+        }
+      }
+      &.title-textalign-left {
+        .popup-head-title {
+          padding-left: 20rpx;
+        }
+      }
+      &.title-border-bottom {
+        border-bottom: 1px solid @color-eeeeee;
+      }
+
+      .popup-head-title {
+        height: @headHeight;
+        line-height: @headHeight;
+        font-size: 28rpx;
+        position: absolute;
+        left: 10rpx;
+        right: 100rpx;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      @base64-btn-close: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACGElEQVQ4ja2USa9hURSFN652IBFzfRdmDDWRSEQTBv6mREKijwQRYWZkoAmJuZHoeWXt1PW8x1X1KrUHrsM531lrn3Wu7ONW9B9Ljo/L5UKbzYau1+uPAdBzOBxou91+Ane7HeXzeRqPxz+CArbf76lcLtNgMPgE6nQ6CoVC1O/3aTqdsuK/KagqlUqkUqkoEonwbwJT5XKy2+0kCALvJpPJeKxQKN7aLBQKpNfrKR6P3+fKHg8FdpfLJXW7XQoEAuT1ep+gjzahLBaLsUOIuCsUC0otFgvvPhwOSaPRkM1mu0MBw+HV63VSKpWUSCT4KcLuPfwOdbvdFA6HeeF8Pmflos1qtcrzksnkE+zJ8mMBslgsqNVqMRzKAQMAMKh/VZJAETqZTKjT6bAao9EoqUzS8pfdbovMZjM3f71ek9Vq5X5KwVCC1B8QfjweuY8Gg4H8fj+NRiNW53K5JCP1EggYQlupVFhNNptlAHLa6/VIq9WSyWTiA/yjZVFZs9nkG5NKpdgygB6Ph6LRKKuezWYvr+mTQsBwmpicy+UYJhaguEGn04na7TaP0ddHpfdvYs6KxSIrS6fT3K8nS7fFUIooNRoNWq1WX5QKjzZrtRr3DHcTyiSj8Tv8eCKnwWCQnE4njxkIC+jZ+XymTCZDarX6bTREqMPhYFd4dSHoiBgDcdmhELB3of1e6KHP52MYIgXg25vyL/ULuTgXx3l6WnwAAAAASUVORK5CYII=';
+      .popup-head-close {
+        width: 80rpx;
+        height: @headHeight;
+        text-align: center;
+        line-height: @headHeight;
+        font-size: 28rpx;
+        float: right;
+        position: relative;
+        z-index: 10;
+        margin-right: 10rpx;
+        background: url('@{base64-btn-close}') center center no-repeat;
+        background-size: 30rpx 30rpx;
+      }
+    }
+
+    // 弹出框内容主体
+    .popup-body {
+      // min-height: 160rpx;
+      position: relative;
+      &:before {
+        content: '';
+        display: inline-block;
+        vertical-align: middle;
+        height: 100%;
+      }
+
+      .popup-body-cont {
+        margin: 30rpx;
+        font-size: 32rpx;
+      }
+    }
+
+    // 弹出框底部
+    .popup-foot {
+      @footHeight: 80rpx;
+
+      height: @footHeight;
+      line-height: @footHeight - 10rpx;
+      border-top: 2rpx solid #ddd;
+      position: relative;
+      text-align: right;
+
+      button {
+        display: inline-block;
+        line-height: 60rpx;
+        .border-radius(10rpx);
+        font-size: 24rpx;
+        margin: 0 10rpx;
+        overflow: inherit;
+      }
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="{{ 'popup-component' + (' ' + class) + (popupStatus ? ' ' + popupStatus : '') }}">
+    <view class="popup-mask" @tap="maskTap"></view>
+    <view class="{{ 'popup-main' + (type ? ' ' + type : '')}}">
+      <view class="{{ 'popup-head' + (' title-textalign-' + titleTextAlign) + (' title-border-'+titleBorder)}}" wx:if="{{isShowHead}}" id="j-popup-head">
+        <text class="popup-head-title" wx:if="{{title}}">{{title}}</text>
+        <slot name="popup-title-slot"></slot>
+        <text class="popup-head-close" @tap="close"></text>
+      </view>
+      <slot class="popup-body" id="j-popup-body" name="popup-body-cont-wrap"></slot>
+      <view class="popup-body" id="j-popup-body" wx:if="{{!isCustomContent}}">
+        <view class="popup-body-cont">
+          {{content}}
+          <slot name="popup-body-cont"></slot>
+        </view>
+      </view>
+      <view class="popup-foot" @tap="buttonTap" wx:if="{{isShowFoot || !buttons}}" id="j-popup-foot">
+        <repeat for="{{buttons}}" key="index" index="index" item="item">
+          <button type="{{item.type}}" data-index="{{index}}" data-key="{{item.key}}" data-item="{{item}}">{{item.text}}</button>
+        </repeat>
+        <slot name="popup-button-slot"></slot>
+      </view>
+    </view>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import PopupComponent from './view'
+export default PopupComponent
+</script>

@@ -1,0 +1,70 @@
+<!--
+ * @Description: BannerComponent
+ * @Author: huyanhai
+ * @since: 2019-05-17 09:54:07
+ * @lastTime: 2019-09-09 10:41:13
+ -->
+<template>
+  <view class="swiper-banner">
+    <swiper class="ui-repeart" indicator-dots="true" indicator-color="rgba(255,255,255,0.2)" indicator-active-color="#fff" autoplay="true">
+      <repeat for="{{dataArr}}" key="index" index="index" item="item">
+        <swiper-item class="repeart-item" @tap="toOutLinks" data-item="{{item}}">
+          <view class="item-box">
+            <image src="{{item.cover}}" mode="aspectFill" class="ui-img" />
+          </view>
+        </swiper-item>
+      </repeat>
+    </swiper>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class BannerComponent extends wepy.component {
+  props = {
+    dataArr: {
+      type: Array
+    }
+  }
+  data = {}
+  methods = {
+    toOutLinks(e) {
+      let link = e.currentTarget.dataset.item.link
+      if (link) {
+        wx.navigateTo({
+          url: 'out-links?links=' + JSON.stringify(link)
+        })
+      }
+    }
+  }
+}
+</script>
+<style lang="less">
+@import '../../../assets/less/mixin.less';
+.swiper-banner {
+  height: 280rpx;
+  overflow: hidden;
+  .swiper {
+    height: 280rpx;
+    overflow: hidden;
+  }
+  .ui-repeart {
+    height: 280rpx;
+    overflow: hidden;
+    .repeart-item {
+      padding: 0 20rpx;
+      border-radius: 20rpx;
+      box-sizing: border-box;
+    }
+    .item-box {
+      width: 100%;
+      border-radius: 20rpx;
+      overflow: hidden;
+      height: 280rpx;
+    }
+    .ui-img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+</style>

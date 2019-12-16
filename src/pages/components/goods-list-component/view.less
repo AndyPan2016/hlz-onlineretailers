@@ -1,0 +1,96 @@
+/**
+ * 商品列表组件-视图样式
+ * @Author: AndyPan
+ * @CreateDate: 2019年5月9日15:59:50
+ * @LastUpdateDate: 2019年4月29日10:48:00
+ * @Remarks: 备注
+*/
+
+@import '../../../assets/less/mixin.less';
+
+.goods-list-component {
+  padding: 20rpx 18rpx;
+  box-sizing: border-box;
+  .goods-dataset-slot {
+    width: 100%;
+    .clearfix();
+
+    .goods-list-item {
+      width: 50%;
+      float: left;
+      margin-bottom: 20rpx;
+      box-sizing: border-box;
+      &:nth-child(2n) {
+        padding-left: 10rpx;
+      }
+      &:nth-child(2n-1) {
+        padding-right: 10rpx;
+      }
+      .goods-item-wrap {
+        background: @color-ffffff;
+        height: 530rpx;
+        overflow: hidden;
+        border-radius: 20rpx;
+
+        .goods-item-thumb {
+          width: 100%;
+          height: 360rpx;
+          display: block;
+          .image-placeholder();
+        }
+        .goods-item-title {
+          margin: 0 20rpx;
+          margin-top: 20rpx;
+          display: inline-block;
+          height: 80rpx;
+          line-height: 40rpx;
+          font-size: 28rpx;
+          color: @color-222222;
+          text-align: left;
+          display: -webkit-box;
+          -moz-box-orient: vertical;
+          -webkit-box-orient: vertical;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          -webkit-line-clamp: 2;
+          word-break: break-all;
+        }
+
+        .goods-item-foot {
+          @ftHeight: 42rpx;
+          height: @ftHeight;
+          margin: 14rpx 20rpx;
+          position: relative;
+          .clearfix();
+          .goods-price {
+            float: left;
+            height: @ftHeight;
+            line-height: @ftHeight;
+            font-size: 32rpx;
+            color: @color-C50F0F;
+            font-family: 'Bahnschrift';
+          }
+          .goods-label {
+            float: right;
+            height: @ftHeight;
+            .label-item {
+              float: left;
+              height: 24rpx;
+              line-height: 24rpx;
+              padding: 0 10rpx;
+              margin: 8rpx 5rpx;
+              border-radius: 4rpx;
+              border: 0.5rpx solid @brand-primary;
+              font-size: 20rpx;
+              color: @brand-primary;
+              &.isnew {
+                color: #f1d3a9;
+                border: 0.5rpx solid #f1d3a9;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

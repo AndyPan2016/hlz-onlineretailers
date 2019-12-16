@@ -1,0 +1,65 @@
+<!--
+  swiper组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年4月25日15:37:10
+  @LastUpdateDate: 2019年4月25日15:37:13
+  @Remarks: 小程序自带的swiper组件的二次封装
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+// @import '../../assets/less/mixin.less';
+
+.swiper-custom-component{
+    height: 384rpx;
+    position: relative;
+    margin: 0 auto;
+
+    .swiper-main{
+      height: 100%;
+
+      image{
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    .indicator-wrap{
+        position: absolute;
+        bottom: 66rpx;
+        right: 25rpx;
+        display: inline-block;
+        padding: 5rpx 30rpx;
+        background: rgba(255, 255, 255, 0.2);
+        color: #FFF;
+        font-size: 24rpx;
+        border-radius: 20rpx;
+        // .border-radius(20rpx);
+    }
+  }
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="{{ 'swiper-custom-component' + (' ' + (class)) }}" style="{{styleString}}">
+    <swiper autoplay="{{autoplay}}" 
+      indicator-dots="{{indicator-dots}}"
+      bindchange="swiperItemChange"
+      class="swiper-main">
+      <repeat for="{{dataset}}" key="index" index="index" item="item">
+        <swiper-item data-index="{{index}}">
+          <image mode="aspectFill" src="{{item.thum || item.picture || item.imgSrc}}" data-img="{{item.thum || item.picture || item.imgSrc}}" data-link="{{item.link}}" @tap="tapSwiperItem" />
+        </swiper-item>
+      </repeat>
+    </swiper>
+    <text class="indicator-wrap">{{ (idx || 1) + '/' + (idxAll) }}</text>
+    <web-view src="{{thisWebView}}" wx:if="{{thisWebView}}"></web-view>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+  import TemplateComponent from './view'
+  export default TemplateComponent
+</script>

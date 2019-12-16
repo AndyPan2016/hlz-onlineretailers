@@ -1,0 +1,254 @@
+<!--
+ * @Description: 个人中心
+ * @Author: huyanhai
+ * @since: 2019-08-14 14:13:33
+ * @lastTime: 2019-10-08 10:31:16
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="user-info">
+        <view class="info-post">
+          <image src="{{personalInfo.thumb}}" />
+        </view>
+        <text class="info-name">{{personalInfo.name}}</text>
+      </view>
+      <view class="my-server">
+        <view class="server-hd">
+          我的服务
+        </view>
+        <view class="server-bd">
+          <view class="server-item" @tap="goBrowse">
+            <image class="ui-img" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/my-history.png" />
+            <p class="text">浏览记录</p>
+          </view>
+          <view class="server-item" @tap="goAddress">
+            <image class="ui-img" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/my-address.png" />
+            <p class="text">收货地址</p>
+          </view>
+          <view class="server-item" @tap="goHelp">
+            <image class="ui-img" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/my-help.png" />
+            <p class="text">帮助中心</p>
+          </view>
+          <view class="server-item" @tap="goMessage" :class="{active:messageCount}">
+            <image class="ui-img" src="https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/my-message.png" />
+            <p class="text">消息中心</p>
+          </view>
+        </view>
+      </view>
+    </view>
+    <user-authorize :onAuthorizeAll="onAuthorizeAllFn" :authorizeType="authorizeType" :onCloseAuthorize="onCloseAuthorizeFn" />
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import UserAuthorizeComponent from '@/components/user-authorize-component/index'
+import { IndexService } from '../services'
+import { STATUS, Tips } from '@/configs'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class myPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    personalInfo: {},
+    footerData: [
+      {
+        icon: 'home',
+        text: '首页',
+        active: false,
+        path: '/index'
+      },
+      {
+        icon: 'order',
+        text: '订单',
+        active: false,
+        path: '/my-order'
+      },
+      {
+        icon: 'my',
+        text: '我的',
+        active: true,
+        path: '/my'
+      }
+    ],
+    userNo: '',
+    messageCount: '',
+    title: '个人中心',
+    theme: 'while'
+  }
+  // 组件
+  components = {
+    'user-authorize': UserAuthorizeComponent,
+    navigationBar
+  }
+  /**
+   * 用户是否有未读消息
+   */
+  checkUserMassage() {
+    let parme = {}
+    parme['userNo'] = this.userNo
+    parme['clientType'] = 'SHOP_C_MINI'
+    IndexService.userNotReadNoticeCount({
+      data: parme
+    }).then(res => {
+      if (res.data.success) {
+        this.messageCount = res.data.count ? res.data.count.toString() : ''
+        if (this.messageCount) {
+          wx.showTabBarRedDot({
+            index: 2
+          })
+        }
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  onAuthorizeAllFn(data) {
+    let userInfo = data.userInfo
+    wepy.setStorageSync(STATUS.USER_INFO, userInfo)
+    wepy.setStorageSync(STATUS.USER_NO, data.userNo)
+    this.personalInfo = {
+      thumb: userInfo.avatarUrl,
+      name: userInfo.nickName,
+      id: data.userNo
+    }
+    this.userNo = data.userNo
+    this.checkUserMassage()
+    this.$apply()
+  }
+
+  /**
+   * 授权被用户关闭，返回上一页面
+   */
+  onCloseAuthorizeFn() {
+    Tips.error('您取消的授权')
+  }
+  goAddress() {
+    wepy.navigateTo({ url: 'address-list?toBack=my&isUserpage=true' })
+  }
+  goBrowse() {
+    wepy.navigateTo({ url: 'browsing-history' })
+  }
+  goHelp() {
+    wepy.navigateTo({ url: 'help' })
+  }
+  goMessage() {
+    wepy.navigateTo({ url: 'message-center?messageCount=' + this.messageCount })
+  }
+  onLoad(options) {}
+  onShow() {
+    let userInfo = wepy.getStorageSync(STATUS.USER_INFO)
+    let userNo = wepy.getStorageSync(STATUS.USER_NO)
+    if (userInfo && userNo) {
+      this.personalInfo = {
+        thumb: userInfo.avatarUrl,
+        name: userInfo.nickName,
+        id: userNo
+      }
+      this.userNo = userNo
+      this.checkUserMassage()
+    } else {
+      this.$invoke('user-authorize', 'authorizeActivation')
+    }
+  }
+}
+</script>
+
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+  .user-info {
+    height: 256rpx;
+    background: url('https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/my-bg.png')
+      no-repeat;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    .info-post {
+      width: 112rpx;
+      height: 112rpx;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 6rpx solid @color-ffffff;
+      margin: 0 30rpx 0 60rpx;
+      image {
+        width: 100%;
+        height: 100%;
+      }
+    }
+    .info-name {
+      font-size: 30rpx;
+      color: @color-ffffff;
+    }
+  }
+  .my-server {
+    background: @color-ffffff;
+    margin-top: 20rpx;
+    .server-hd {
+      height: 80rpx;
+      line-height: 80rpx;
+      border-bottom: 1px solid @color-eeeeee;
+      padding-left: 30rpx;
+      font-size: 30rpx;
+      color: @color-222222;
+    }
+    .server-bd {
+      margin: 0 60rpx;
+      height: 200rpx;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      .server-item {
+        position: relative;
+        &.active {
+          &::before {
+            content: '';
+            width: 12rpx;
+            height: 12rpx;
+            border-radius: 50%;
+            background: @color-F74545;
+            position: absolute;
+            display: block;
+            right: 20rpx;
+          }
+        }
+        .ui-img {
+          width: 56rpx;
+          height: 56rpx;
+          display: block;
+          margin: 0 auto 20rpx auto;
+        }
+        .text {
+          font-size: 24rpx;
+          color: @color-222222;
+          display: block;
+        }
+      }
+    }
+  }
+}
+</style>

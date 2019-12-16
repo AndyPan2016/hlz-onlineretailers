@@ -1,0 +1,208 @@
+<!--
+  定制弹出框组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年4月25日15:37:10
+  @LastUpdateDate: 2019年4月25日15:37:13
+  @Remarks: 
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.customized-popup {
+  .custom-popup{
+    .popup-main{
+      width: 75%;
+      .border-radius(16rpx);
+      .box-shadow(0 0 20px rgba(0, 0, 0, 0));
+      .popup-foot{
+          border: none;
+          height: auto;
+          line-height: auto
+      }
+      .popup-button-slot{
+          height: 115rpx;
+          line-height: 115rpx;
+          background: #FF4C2F;
+          font-size: 30rpx;
+          color: #FFF;
+          text-align: center;
+      }
+    }
+  }
+  .popup-body-cont-slot{
+    height: auto;
+    margin: 0;
+    text-align: center;
+
+    .popup-head-custom{
+      height: 94rpx;
+      line-height: 94rpx;
+      border-bottom: .5rpx solid #EEEEEE;
+      text-align: center;
+      font-size: 36rpx;
+      color: #222222;
+    }
+    
+    .tip-text-message{
+        display: inline-block;
+        width: 100%;
+        font-size: 26rpx;
+        margin-top: 40rpx;
+        word-wrap:break-word;
+    }
+    .tip-text-remark{
+        display: inline-block;
+        width: 100%;
+        margin-top: 20rpx;
+        margin-bottom: 50rpx;
+        color: @color-bbbbbb;
+        word-wrap:break-word;
+    }
+
+    .icon-popup-success{
+        display: inline-block;
+        width: 100%;
+        height: 87rpx;
+        background: url('@{base64-icon-success}') center 0 no-repeat;
+        background-size: auto 100%;
+        margin-top: -30rpx;
+        margin-bottom: 30rpx;
+    }
+    .popup-tip-text{
+        // display: inline-block;
+        // width: 100%;
+        font-size: 30rpx;
+        line-height: 32rpx;
+        color: #555555;
+        margin:0 56rpx;
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="customized-popup">
+    <popup :buttons="boolFalse" class="custom-popup" :isCustomContent="boolTrue" :title.sync="title" titleTextAlign="center" :isTapMaskClose="isTapMaskClose" :isShowFoot="isShowFoot" :onOpen.sync="onOpen" :onClose.sync="onClose" :onCloseByUser.sync="onCloseByUser" :onSure.sync="onSure" :onNo.sync="onNo" :onCancel.sync="onCancel">
+      <view slot="popup-body-cont-wrap" class="{{ 'popup-body-cont-slot' + (customClass ? ' ' + customClass : '') }}">
+        <!-- <view class="popup-head-custom">{{title}}</view> -->
+        <view class="popup-tip-text">
+          <view class="tip-text-message">{{message}}</view>
+          <text class="tip-text-remark">{{remark}}</text>
+        </view>
+      </view>
+      <view slot="popup-button-slot" class="popup-button-slot" vx:if="{{buttonText}}" @tap="buttonClick">{{buttonText}}</view>
+    </popup>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+import PopupComponent from '@/components/popup-component/index'
+
+export default class CustomizedPopupComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    customClass: String,
+    // 标题，不写就不显示标题栏
+    title: { type: String },
+    // 消息，不写就不显示
+    message: String,
+    // 备注，不写就没有
+    remark: String,
+    // 按钮文字
+    buttonText: { type: String, default: '确认' },
+    // 点击背景遮罩层是否关闭弹出框
+    isTapMaskClose: { type: Boolean },
+    // 是否显示foot
+    isShowFoot: { type: Boolean, default: true },
+    // 弹出框打开事件
+    onOpen: { type: Function },
+    // 弹出框关闭事件
+    onClose: { type: Function },
+    // 必须用户点击操作才触发
+    onCloseByUser: Function,
+    // sure类型按钮点击事件
+    onSure: { type: Function },
+    // no类型按钮点击事件
+    onNo: { type: Function },
+    // cancel按钮类型事件
+    onCancel: { type: Function }
+  };
+  components = {
+    // 弹出框
+    popup: PopupComponent
+  };
+  // 模板(绑定)数据
+  data = {
+    // true/false变量
+    boolTrue: true,
+    boolFalse: false
+  };
+
+  methods = {
+    buttonClick(e) {
+      let onSure = this.onSure
+      if (onSure) {
+        onSure.call(this.$parent, e)
+      }
+      this.$emit('onSure')
+    }
+  };
+
+  open(options) {
+    if (options) {
+      let title = options.title
+      if (title) {
+        this.title = title
+      }
+
+      let message = options.message
+      if (message) {
+        this.message = message
+      }
+
+      let remark = options.remark
+      if (remark) {
+        this.remark = remark
+      }
+
+      let buttonText = options.buttonText
+      if (buttonText) {
+        this.buttonText = buttonText
+      }
+
+      let onSure = options.onSure
+      if (onSure) {
+        this.onSure = onSure
+      } else {
+        this.onSure = null
+      }
+
+      let onClose = options.onClose
+      if (onClose) {
+        this.onClose = onClose
+      } else {
+        this.onClose = null
+      }
+
+      this.$apply()
+    }
+    this.$invoke('popup', 'open')
+  }
+
+  onSure(e) {
+    if (this.onSure) {
+      this.onSure.call(this.$parent, e)
+    }
+    this.$emit('onSure')
+  }
+  close() {
+    this.$invoke('popup', 'close')
+  }
+}
+</script>

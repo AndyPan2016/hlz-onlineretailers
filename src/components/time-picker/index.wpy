@@ -1,0 +1,323 @@
+<!--
+ * @Description: 时间控件 支持年月日 时分
+ * @Author: huyanhai
+ * @since: 2019-06-19 13:49:45
+ * @lastTime: 2019-06-20 10:20:38
+ -->
+
+<template>
+  <!-- 组件模板 -->
+  <view
+    class="wrapper"
+    wx:if="{{showTimesPicker}}"
+  >
+    <!-- 日期模态框 -->
+    <view class="modelboxbg"></view>
+    <view
+      class="modelbox"
+      :class="{show:showTimesPicker}"
+    >
+      <view class="model_picker">
+        <view class="button_model">
+          <text @tap='cancel'>取消</text>
+          <text @tap='submit'>确定</text>
+        </view>
+        <view class="cont_model">
+          <picker-view
+            indicator-style="height: 50px;"
+            style="width: 100%; height: 300px;"
+            value="{{timesArray}}"
+            catchchange="fnbindChange"
+          >
+            <!-- 年 -->
+            <picker-view-column wx:if="{{years.length > 0}}">
+              <view
+                wx:for="{{years}}"
+                wx:key="{{index}}"
+                style="line-height: 50px"
+              >{{item}}</view>
+            </picker-view-column>
+            <!-- 月 -->
+            <picker-view-column wx:if="{{months.length > 0}}">
+              <view
+                wx:for="{{months}}"
+                wx:key="{{index}}"
+                style="line-height: 50px"
+              >{{item}}</view>
+            </picker-view-column>
+            <!-- 日 -->
+            <picker-view-column wx:if="{{days.length > 0}}">
+              <view
+                wx:for="{{days}}"
+                wx:key="{{index}}"
+                style="line-height: 50px"
+              >{{item}}</view>
+            </picker-view-column>
+            <!-- 时 -->
+            <picker-view-column wx:if="{{hours.length > 0}}">
+              <view
+                wx:for="{{hours}}"
+                wx:key="{{index}}"
+                style="line-height: 50px"
+              >{{item}}</view>
+            </picker-view-column>
+            <!-- 分 -->
+            <picker-view-column wx:if="{{minutes.length > 0}}">
+              <view
+                wx:for="{{minutes}}"
+                wx:key="{{index}}"
+                style="line-height: 50px"
+              >{{item}}</view>
+            </picker-view-column>
+          </picker-view>
+        </view>
+
+      </view>
+    </view>
+
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import times from './times'
+export default class timePickerComponent extends wepy.component {
+  props = {
+    timevalue: {
+      type: String,
+      value: '时间'
+    },
+    title: {
+      type: String,
+      default: '时间控件'
+    },
+    dateDefault: {
+      type: Object,
+      default: {
+        hours: 12,
+        minutes: 8
+      }
+    },
+    showTimesPicker: {
+      type: Boolean,
+      default: false
+    },
+    onSubmit: {
+      type: Function
+    },
+    onCancel: {
+      type: Function
+    }
+  }
+  data = {
+    timesArray: [],
+    years: [],
+    months: [],
+    days: [],
+    hours: [],
+    minutes: [],
+    seconds: []
+  }
+  onLoad() {
+    this._initTimeArray()
+    /**
+     * 如果没有设置时间则，
+     */
+    this.isDefauleTimes()
+  }
+  computed = {
+    timevalue() {}
+  }
+  methods = {
+    /**
+     * 确定选择的日期
+     */
+    submit(e) {
+      let times = ''
+      let year = this.years[this.timesArray[0]]
+      let month = this.months[this.timesArray[1]]
+      let day = this.days[this.timesArray[2]]
+      let hour = this.hours[this.timesArray[3]]
+      let minute = this.minutes[this.timesArray[4]]
+      year = year.substring(0, year.length - 1)
+      month = month.substring(0, month.length - 1)
+      day = day.substring(0, day.length - 1)
+      hour = hour.substring(0, hour.length - 1)
+      minute = minute.substring(0, minute.length - 1)
+      times = this.arrTimeToStr(year, month, day, hour, minute)
+      if (this.onSubmit) {
+        this.onSubmit.call(this.$parent, times, e)
+      }
+      this.$emit('onSubmit', times)
+    },
+    /**
+     * 取消选择日期关闭弹窗
+     */
+    cancel(e) {
+      if (this.onCancel) {
+        this.onCancel.call(this.$parent, times, e)
+      }
+      this.$emit('onCancel', times)
+    },
+    /**
+     * 时间发生改变的时候判断月份和
+     */
+    fnbindChange(e) {
+      let date = e.detail.value
+      this.changeDay(
+        this.years[date[0]].substring(0, this.years[date[0]].length - 1),
+        this.months[date[1]].substring(0, this.months[date[1]].length - 1)
+      )
+      this.timesArray = date
+      this.$apply()
+    }
+  }
+
+  /**
+   * 初始化时间
+   */
+  _initTimeArray() {
+    const date = new Date()
+    const years = []
+    const months = []
+    const days = []
+    const hours = []
+    const minutes = []
+    const seconds = []
+    for (let i = date.getFullYear() - 10; i <= date.getFullYear() + 10; i++) {
+      years.push(i + '年')
+    }
+    for (let i = 1; i <= 12; i++) {
+      months.push(i + '月')
+    }
+    for (let i = 1; i <= 31; i++) {
+      days.push(i + '日')
+    }
+    for (let i = 1; i <= 23; i++) {
+      hours.push(i + '时')
+    }
+    for (let i = 1; i <= 59; i++) {
+      minutes.push(i + '分')
+    }
+    for (let i = 1; i <= 59; i++) {
+      seconds.push(i + '秒')
+    }
+    this.years = years
+    this.months = months
+    this.days = days
+    this.hours = hours
+    this.minutes = minutes
+    this.seconds = seconds
+    this.$apply()
+  }
+  /**
+   * 判断是否有默认时间
+   */
+  isDefauleTimes() {
+    if (this.timevalue) {
+      this.timeToArr(this.timevalue)
+    } else {
+      const timestamp = new Date().getTime()
+      const time = times.getobjDate(timestamp, this.dateDefault)
+      this.timeToArr(time)
+    }
+  }
+  /**
+   * 通过月份设置天数
+   */
+  changeDay(years, months) {
+    this.days = []
+    let days = times.mGetDate(years, months)
+    for (let i = 1; i <= days; i++) {
+      this.days.push(i + '日')
+    }
+    this.$apply()
+  }
+  /**
+   * timeToArr
+   */
+  timeToArr(str) {
+    let timesArr = times.getarrWithtime(str)
+    this.timesArray[0] = this.getTimeIndex(timesArr[0] + '年', this.years)
+    this.timesArray[1] = this.getTimeIndex(timesArr[1] + '月', this.months)
+    this.timesArray[2] = this.getTimeIndex(timesArr[2] + '日', this.days)
+    this.timesArray[3] = this.getTimeIndex(timesArr[3] + '时', this.hours)
+    this.timesArray[4] = this.getTimeIndex(timesArr[4] + '分', this.minutes)
+    this.$apply()
+  }
+  /**
+   * 根据时间获取对应的下标
+   */
+  getTimeIndex(str, arr) {
+    for (let index in arr) {
+      if (arr[index] === str) {
+        return index
+      }
+    }
+  }
+  /**
+   * 时间数组转时间字符串
+   */
+  arrTimeToStr(year, month, day, hour, minute) {
+    return times.getDate(year, month, day, hour, minute)
+  }
+}
+</script>
+<style lang="less" scoped>
+@keyframes up {
+  0% {
+    bottom: -800rpx;
+  }
+  100% {
+    bottom: 0rpx;
+  }
+}
+/* 模态框开始 */
+/* 蒙层 */
+.modelboxbg {
+  position: absolute;
+  top: 0;
+  z-index: 10000;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  opacity: 0.3;
+  left: 0;
+}
+.modelbox {
+  position: absolute;
+  z-index: 999999;
+  width: 100%;
+  background: #fff;
+  left: 0;
+  animation: up 0.5s ease;
+  transition: all 0.5s;
+  bottom: 0;
+}
+picker-view-column {
+  text-align: center;
+}
+view.model_picker {
+  position: relative;
+}
+.button_model {
+  height: 80rpx;
+  width: 100%;
+  background: #fff;
+  position: relative;
+  border-bottom: 1px solid #eee;
+}
+.button_model text {
+  color: #007aff;
+  position: absolute;
+  background: transparent;
+  border: none;
+  line-height: 80rpx;
+}
+.button_model text:first-child {
+  left: 32rpx;
+}
+.button_model text:last-child {
+  right: 32rpx;
+}
+/* 模态框结束 */
+</style>

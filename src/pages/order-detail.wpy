@@ -1,0 +1,793 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-08-01 11:46:34
+ * @lastTime: 2019-10-24 10:27:35
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page + {{(orderInfo.status !== 'PAY_PROCESSING' && orderInfo.status !== 'CANCELED') ? '' : ' page-no-pd'}}">
+      <!-- 订单状态 -->
+      <view class="order-state">
+        <view class="col-l">
+          <view class="state paying" wx:if="{{orderInfo.status !== 'SHIPPED' || orderInfo.status !== 'COMPLETED' || orderInfo.status !== 'COMMENT'}}">
+            {{ orderStateMap[orderInfo.status] }}
+          </view>
+          <view class="state complate" wx:else>
+            {{ orderStateMap[orderInfo.status] }}
+          </view>
+          <text class="time">{{orderInfo.createTime}}</text>
+
+          <text class="tips" wx:if="{{orderInfo.status === 'SHIPPED'}}">订单已发出，正在运输途中，请耐心等待。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'PENDING_PAYMENT'}}">订单提交成功，请在24小时完成支付。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'CANCELED'}}">订单取消成功，欢迎再次光临昏礼者。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'CLOSED'}}">订单超过24小时未支付，已自动关闭，欢迎再次光临昏礼者。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'PAY_PROCESSING'}}">订单支付处理中，请耐心等待。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'IN_THE_STOCK'}}">您的订单已进入仓库备货。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'PREPARE_OUT_STOCK'}}">订单正在备货中，请耐心等待。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'PENDINGSHIPMENT'}}">订单已备货完成，等待交付{{ligisticsInfo.logisticsName}}，运单号为{{ligisticsInfo.logisticsNo}}。</text>
+          <text class="tips" wx:if="{{orderInfo.status === 'COMPLETED'}}">订单已签收，感谢您在昏礼者购物，欢迎再次光临。</text>
+        </view>
+        <view class="col-r">
+          <image wx:if="{{ orderInfo.status === 'PAY_FAILED' || orderInfo.status === 'CANCELED'|| orderInfo.status === 'CLOSED'}}" class="state-pic reminder" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/state-reminder.png':''}}"></image>
+          <image wx:elif="{{orderInfo.status === 'PENDING_PAYMENT' || orderInfo.status === 'IN_THE_STOCK' || orderInfo.status === 'PAY_PROCESSING' || orderInfo.status === 'PREPARE_OUT_STOCK' || orderInfo.status === 'PENDINGSHIPMENT'}}" class="state-pic reminder" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/state-paying.png':''}}"></image>
+          <image wx:elif="{{orderInfo.status === 'COMPLETED' || orderInfo.status === 'COMMENT'}}" class="state-pic reminder" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/state-complate.png':''}}"></image>
+          <image wx:elif="{{orderInfo.status === 'SHIPPED'}}" class="state-pic reminder" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/shipping.png':''}}"></image>
+
+        </view>
+        <view class="more" @tap="goLogistics" data-item="{{orderInfo.status}}"></view>
+      </view>
+      <!-- 地址信息 -->
+      <view class="address-info gift-text" @tap="goaddressList" wx:if="{{giftData && orderType==='MULTIPLE_ADDRESS'}}">
+        <view class="gift">
+          <view class="name">{{giftDataname}}</view>等<text class="ui-color">{{giftData.length}}</text>位收货人
+        </view>
+      </view>
+      <view class="address-info" wx:else>
+        <text class="user-info">{{ orderInfo.receiverList[0].receiverName }}</text><text class="user-info">{{ orderInfo.receiverList[0].receiverMobileNo }}</text>
+        <text class="address">{{ orderInfo.receiverList[0].receiverProvince + orderInfo.receiverList[0].receiverCity + orderInfo.receiverList[0].receiverTown+ orderInfo.receiverList[0].receiverAddress}}</text>
+      </view>
+      <!-- 商品信息 -->
+      <view class="goods-info">
+        <view class="ui-text">商品清单</view>
+        <view wx:if="{{!isOldOrder}}">
+          <view wx:for="{{shopData}}" wx:key="{{index}}">
+            <view class="col-list">
+              <repeat wx:for="{{item.goodsOrderLogisticList}}" wx:key="{{index}}">
+                <view>
+                  <shop-list :shopData="item" :orderDetail="true" :orderStatus.sync="orderInfo.status"></shop-list>
+                </view>
+              </repeat>
+              <view class="sub-amount">
+                <view class="col-l">商品金额</view>
+                <view class="col-r">￥{{item.productValue}}</view>
+              </view>
+              <view class="delivery">
+                <view class="col-l">运费（{{item.distributeType}}）</view>
+                <view class="col-r">{{item.freight>0?(item.feePaymentTypeCode==='ARRIVE_PAY'?' 预估':'')+'￥'+item.freight:''}}{{item.freight>0?'('+item.feePaymentType+')':'包邮'}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view wx:else>
+          <repeat for="{{shopData}}" wx:key="{{index}}">
+            <view>
+              <shop-list :shopData="item" :orderDetail="true" :orderStatus.sync="orderInfo.status"></shop-list>
+            </view>
+          </repeat>
+        </view>
+      </view>
+      <!-- 订单信息 -->
+      <view class="order-info">
+        <view class="order-item">
+          <text class="col-l">订单编号</text>
+          <view class="col-r"><text class="copy" @tap="copyOrderNp" data-item="{{orderInfo.goodsOrderNo}}">复制</text>{{ orderInfo.goodsOrderNo }}</view>
+        </view>
+        <view class="order-item">
+          <text class="col-l">下单时间</text>
+          <view class="col-r">{{ orderInfo.createTime }}</view>
+        </view>
+      </view>
+      <!-- 支付信息 -->
+      <view class="pay-info {{orderInfo.status === 'SHIPPED' ? 'nobtn':''}}">
+        <view class="pay-item">
+          <text class="col-l">商品金额</text>
+          <view class="col-r">￥{{ orderInfo.goodsAmount }}</view>
+        </view>
+        <view class="pay-item">
+          <text class="col-l">运费</text>
+          <view class="col-r">￥{{ orderInfo.freight }}</view>
+        </view>
+        <view class="pay-item">
+          <text class="col-l">优惠金额</text>
+          <view class="col-r">￥{{ orderInfo.discountAmount }}</view>
+        </view>
+        <view class="pay-item">
+          <text class="col-l">应付金额</text>
+          <view class="col-r color-r">￥{{ orderInfo.orderAmount }}</view>
+        </view>
+      </view>
+      <view class="order-info" wx:if="{{orderInfo.status !== 'PENDING_PAYMENT' && orderInfo.status !== 'PAY_FAILED' && orderInfo.status !== 'CANCELED' && orderInfo.status !== 'CLOSED' && orderInfo.status !== 'PAY_PROCESSING'}}">
+        <view>
+          <view class="order-item">
+            <text class="col-l">支付方式</text>
+            <view class="col-r">{{ orderInfo.payType }}</view>
+          </view>
+          <view class="order-item pay-item">
+            <text class="col-l">实付金额</text>
+            <view class="col-r">￥{{ orderInfo.payAmount }}</view>
+          </view>
+        </view>
+      </view>
+      <view class="p-top"></view>
+    </view>
+    <!-- 操作 -->
+    <view class="operation" wx:if="{{orderInfo.status !== 'PAY_PROCESSING' && orderInfo.status !== 'CANCELED'}}">
+      <!-- 待付款 -->
+      <view class="ui-btn pay paying" wx:if="{{orderInfo.status === 'PENDING_PAYMENT'}}">
+        <text class="col-l" @tap="cancelOrder">取消订单</text>
+        <text class="col-r" @tap="continuePay" data-item="{{orderInfo.goodsOrderNo}}">去付款</text>
+      </view>
+      <!-- 支付失败 -->
+      <view class="ui-btn pay reminder" wx:if="{{orderInfo.status === 'PAY_FAILED'}}">
+        <text class="col-r" @tap="continuePay" data-item="{{orderInfo.goodsOrderNo}}">继续支付</text>
+      </view>
+      <!-- 备货中 -->
+      <view class="ui-btn reminder" wx:elif="{{orderInfo.status === 'IN_THE_STOCK' || orderInfo.status === 'PREPARE_OUT_STOCK' }}" @tap="reminder">去催单</view>
+      <!-- 备货中 -->
+      <view class="ui-btn reminder" wx:elif="{{orderInfo.status === 'SHIPPED'}}" @tap="confirmOrder">确认收货</view>
+      <!-- 已完成 -->
+      <view class="ui-btn pay pay-complete" wx:elif="{{ orderInfo.status === 'COMPLETED'}}">
+        <button class="col-r contact" open-type="contact" session-from="weapp">联系售后</button>
+        <!-- <text class="col-r" @tap="buyOnce" data-item="{{orderInfo.orderLogisticsDtoList[0].goodsOrderLogisticList[0]}}" wx:if="{{!isOldOrder}}">再次购买</text>
+        <text class="col-r" @tap="buyOnce" data-item="{{orderInfo.productInfoList[0]}}" wx:else>再次购买</text> -->
+      </view>
+      <!-- 已关闭 -->
+      <view class="ui-btn pay reminder" wx:elif="{{ orderInfo.status === 'CLOSED'}}">
+        <button class="col-r contact" open-type="contact" session-from="weapp">联系售后</button>
+        <!-- <text class="col-r" @tap="buyOnce" data-item="{{orderInfo.orderLogisticsDtoList[0].goodsOrderLogisticList[0]}}" wx:if="{{!isOldOrder}}">再次购买</text>
+        <text class="col-r" @tap="buyOnce" data-item="{{orderInfo.productInfoList[0]}}" wx:else>再次购买</text> -->
+      </view>
+      <!-- 已取消 -->
+      <!-- <view class="ui-btn pay reminder" wx:elif="{{ orderInfo.status === 'CANCELED'}}">
+        <button class="col-r contact" open-type="contact" session-from="weapp">联系售后</button>
+      </view> -->
+    </view>
+
+    <customized-popup title="提示" buttonText="嗯，我知道了" message="尊敬的用户，我们已经收到你的反馈，会尽快为你处理，谢谢你的谅解。"></customized-popup>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { MyOrderService } from '../services'
+import { Tips } from '@/utils'
+import { STATUS, RESOURCE_PATCH } from '@/configs'
+import { timesFormate } from '@/utils/times.js'
+import CustomizedPopupComponent from '@/components/customized-popup-component/index'
+import ShopList from './components/shop-list-component/index'
+import navigationBar from '@/components/navigation-bar/index'
+export default class OrderDetailPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    title: '订单详情',
+    theme: 'while',
+    userNo: '',
+    // 商品订单编号
+    goodsOrderNo: '',
+    // 页面订单信息
+    orderInfo: {},
+    shopData: [],
+    // 物流信息
+    ligisticsInfo: {},
+    // 订单状态
+    orderStateMap: {
+      PENDING_PAYMENT: '待付款',
+      PAY_FAILED: '支付失败',
+      CANCELED: '已取消',
+      CLOSED: '已关闭',
+      IN_THE_STOCK: '备货中',
+      PAY_PROCESSING: '支付处理中',
+      PREPARE_OUT_STOCK: '待出库',
+      PENDINGSHIPMENT: '待发货',
+      SHIPPED: '已发货',
+      COMPLETED: '已完成',
+      COMMENT: '已评价'
+    },
+    // 图片公共路径
+    resourct_path: RESOURCE_PATCH,
+    giftData: null,
+    giftDataname: '',
+    orderType: '',
+    // 判断是否是无物流 的订单
+    isOldOrder: false
+  }
+  onLoad(opthon) {
+    let userNo = wepy.getStorageSync(STATUS.USER_NO) || ''
+    this.goodsOrderNo = opthon.goodsOrderNo
+    if (userNo) {
+      this.userNo = userNo
+    }
+    this.getOrderDetail({
+      userNo: this.userNo,
+      orderNo: this.goodsOrderNo
+    })
+  }
+  /**
+   * 订单详情查询
+   */
+  getOrderDetail(parme) {
+    let _self = this
+    let parmes = Object.assign({}, parme)
+    MyOrderService.orderInfoQuery({
+      data: parmes
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          data.receiverList[0].receiverMobileNo = timesFormate.phoneFormate(
+            data.receiverList[0].receiverMobileNo
+          )
+          _self.orderInfo = data
+          if (data.status === 'PENDINGSHIPMENT') {
+            this.getLogistics()
+          }
+          this.giftData = data.receiverList
+          for (let item of this.giftData) {
+            this.giftDataname += item.receiverName + ','
+          }
+          this.orderType = data.orderType
+          // 判断是否是无物流的订单
+          this.isOldOrder = data.isOldOrder
+          let proList = []
+          if (!data.isOldOrder) {
+            proList = data.orderLogisticsDtoList
+            for (let item of proList) {
+              for (let shop of item.goodsOrderLogisticList) {
+                shop['coverImg'] = shop.productInfo.coverImage
+                shop['des'] = shop.productInfo.productSpec
+                shop['price'] = shop.productInfo.productPrice
+                shop['goodsCaption'] = shop.productInfo.goodsCaption
+                shop['counterNum'] = shop.goodsNum
+                shop['productNo'] = shop.productInfo.productNo
+                shop['minOrderNum'] = shop.productInfo.minOrderNum
+                shop['fromOrderDetail'] = true
+                shop['userNo'] = _self.userNo
+              }
+            }
+          } else {
+            proList = data.productInfoList
+            for (let item of proList) {
+              item['coverImg'] = item.coverImage
+              item['des'] = item.productSpec
+              item['price'] = item.productPrice
+              item['goodsCaption'] = item.goodsCaption
+              item['counterNum'] = item.count
+              item['productNo'] = item.productNo
+              item['minOrderNum'] = item.minOrderNum
+              item['fromOrderDetail'] = true
+              item['userNo'] = _self.userNo
+            }
+          }
+          _self.shopData = proList
+          _self.$apply()
+        } else {
+          // wepy.navigateBack()
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        // wepy.navigateBack()
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 获取物流信息
+   */
+  getLogistics() {
+    MyOrderService.orderLogisticsInfoQuery({
+      data: {
+        goodsOrderNo: this.goodsOrderNo
+      }
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.ligisticsInfo = data
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 催单
+   */
+  reminder(e) {
+    MyOrderService.reminder({
+      data: {
+        goodsOrderNo: this.goodsOrderNo
+      }
+    })
+      .then(res => {
+        let data = res.data
+        if (data.whetherFirst === 'yes') {
+          this.$invoke('customized-popup', 'open')
+        } else {
+          Tips.error('已收到您的催单申请，我们尽快处理')
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 复制订单号
+   */
+  copyOrderNp(e) {
+    let data = e.currentTarget.dataset.item || ''
+    wx.setClipboardData({
+      data: data,
+      success(res) {
+        wx.getClipboardData({
+          success(res) {}
+        })
+      }
+    })
+  }
+
+  /**
+   * 确认收货
+   */
+  confirmOrder() {
+    MyOrderService.orderReceive({
+      data: {
+        userNo: this.userNo,
+        goodsOrderNo: this.goodsOrderNo
+      }
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.orderInfo.status = 'COMPLETED'
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 查看物流
+   */
+  goLogistics(e) {
+    let goodsOrderNo = this.goodsOrderNo
+    let statusCode = e.currentTarget.dataset.item
+    wx.navigateTo({
+      url:
+        'logistics?goodsOrderNo=' +
+        goodsOrderNo +
+        '&status=' +
+        statusCode +
+        '&type=' +
+        this.orderType
+    })
+  }
+
+  /**
+   * 联系我们
+   */
+  goContactus() {
+    wx.navigateTo({ url: 'contact-us' })
+  }
+
+  continuePay(e) {
+    let goodsOrderNo = e.currentTarget.dataset.item
+    this.doPay({ goodsOrderNo: goodsOrderNo })
+  }
+  // 支付接口
+  doPay(parme) {
+    let _self = this
+    parme = parme || {}
+    parme['payType'] = 'WEIXIN_JS'
+    parme['openid'] = wepy.getStorageSync(STATUS.OPEN_ID)
+    MyOrderService.orderPay({ data: parme })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          // 订单提交成功发起微信支付
+          let payparme = JSON.parse(data.payInfo)
+          wx.requestPayment({
+            timeStamp: payparme.jsTimeStamp,
+            nonceStr: payparme.jsNonceStr,
+            package: payparme.jsPackage,
+            signType: payparme.signType,
+            paySign: payparme.sign,
+            success(res) {
+              // 支付完成跳转到我的订单页面
+              // wx.redirectTo({ url: 'my-order' })
+              _self.orderInfo.status = 'IN_THE_STOCK'
+              _self.$apply()
+            },
+            fail(res) {
+              _self.cancelOrderPay({ payOrderNo: data.payOrderNo })
+            }
+          })
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  // 取消支付订单
+  cancelOrderPay(parme) {
+    MyOrderService.orderCanclePay({
+      data: parme
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.orderInfo.status = 'PENDING_PAYMENT'
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  // 取消订单
+  cancelOrder(parme) {
+    MyOrderService.orderCancle({
+      data: {
+        goodsOrderNo: this.goodsOrderNo
+      }
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          Tips.success('取消订单成功')
+          this.orderInfo.status = 'CANCELED'
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 再次购买
+   */
+  buyOnce(e) {
+    let dataset = e.currentTarget.dataset || {}
+    let productInfo = dataset.item || {}
+    if (productInfo) {
+      let goodsNo = productInfo.goodsNo
+      wepy.navigateTo({ url: 'goods-detail?id=' + goodsNo })
+    }
+  }
+
+  /**
+   * 跳转收货地址列表
+   */
+  goaddressList() {
+    wepy.navigateTo({
+      url: 'address-list?type=MULTIPLE_ADDRESS&orderNo=' + this.goodsOrderNo
+    })
+  }
+  components = {
+    'shop-list': ShopList,
+    'customized-popup': CustomizedPopupComponent,
+    navigationBar
+  }
+}
+</script>
+
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    margin-bottom: 98rpx;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    &.page-no-pd{
+      margin: 0;
+    }
+  }
+  .order-state {
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 254rpx;
+    display: flex;
+    padding: 0 30rpx;
+    background-image: url('https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/order-detailbg.png');
+    position: relative;
+    .col-l {
+      width: 50%;
+      flex: 1 0 auto;
+      border-radius: 0 !important;
+      border: 0 !important;
+      &::after {
+        border-radius: 0 !important;
+        border: 0 !important;
+      }
+      .state {
+        font-size: 30rpx;
+        color: @color-ffffff;
+        margin-top: 50rpx;
+        background-size: 28rpx 28rpx;
+        background-repeat: no-repeat;
+        background-position: left center;
+        padding-left: 40rpx;
+        &.paying {
+          background-image: url(@order_paying);
+        }
+        &.complate {
+          background-image: url(@order_complate);
+        }
+      }
+      .time {
+        font-size: 30rpx;
+        color: @color-ffffff;
+        display: block;
+        margin-bottom: 30rpx;
+        font-family: 'Bahnschrift';
+      }
+      .tips {
+        font-size: 24rpx;
+        color: @color-ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        display: block;
+        max-width: 65%;
+      }
+    }
+    .col-r {
+      position: absolute;
+      top: 0;
+      right: 0;
+      .state-pic {
+        width: 300rpx;
+        height: 230rpx;
+      }
+    }
+    .more {
+      width: 40rpx;
+      height: 100%;
+      background-size: 40rpx 40rpx;
+      background-repeat: no-repeat;
+      background-position: left center;
+      background-image: url(@order_more);
+      position: relative;
+      z-index: 1000;
+    }
+  }
+  .address-info {
+    background: @color-ffffff;
+    padding: 30rpx;
+    margin-bottom: 20rpx;
+    line-height: 40rpx;
+    &.gift-text {
+      display: flex;
+      .gift {
+        flex: 1 0 auto;
+        width: 50%;
+        display: flex;
+        overflow: hidden;
+        align-items: center;
+      }
+      font-size: 28rpx;
+      color: @color-222222;
+      font-weight: bold;
+      .name {
+        max-width: 470rpx;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .ui-color {
+        color: @color-FF2E28;
+      }
+      &::after {
+        background: url('@{base64-icon-mapright}') 100% center no-repeat;
+        background-size: auto 30rpx;
+        content: '';
+        display: block;
+        flex: 0 0 auto;
+        height: 50rpx;
+        width: 50rpx;
+      }
+    }
+    .user-info {
+      color: @color-222222;
+      font-size: 28rpx;
+      font-weight: bold;
+      margin-right: 20rpx;
+    }
+    .address {
+      color: @color-888888;
+      font-size: 24rpx;
+      display: block;
+    }
+  }
+  .goods-info {
+    margin-bottom: 20rpx;
+    .col-list {
+      margin-bottom: 20rpx;
+      overflow: hidden;
+      background: @color-ffffff;
+    }
+    .delivery {
+      display: flex;
+      justify-content: space-between;
+      height: 60rpx;
+      line-height: 60rpx;
+      margin: 0 30rpx;
+      padding-bottom: 20rpx;
+      .col-l {
+        font-size: 28rpx;
+        color: @color-555555;
+      }
+      .col-r {
+        font-size: 28rpx;
+        color: @color-222222;
+        position: relative;
+        font-family: 'Bahnschrift';
+      }
+    }
+    .sub-amount {
+      display: flex;
+      justify-content: space-between;
+      height: 60rpx;
+      line-height: 60rpx;
+      margin: 0 30rpx;
+      border-top: 1px solid @color-eeeeee;
+      padding-top: 20rpx;
+      .col-l {
+        font-size: 28rpx;
+        color: @color-555555;
+      }
+      .col-r {
+        font-size: 28rpx;
+        color: @color-222222;
+        font-family: 'Bahnschrift';
+        // color: @color-C50F0F;
+        font-weight: bold;
+      }
+    }
+    .ui-text {
+      height: 88rpx;
+      line-height: 88rpx;
+      font-size: 28rpx;
+      color: @color-888888;
+      padding-left: 30rpx;
+      border-bottom: 1px solid @color-eeeeee;
+      background: @color-ffffff;
+    }
+  }
+  .order-info,
+  .pay-info {
+    background: @color-ffffff;
+    padding: 30rpx;
+    margin-bottom: 20rpx;
+    .pay-item,
+    .order-item {
+      display: flex;
+      line-height: 60rpx;
+      justify-content: space-between;
+      font-size: 28rpx;
+      .col-l {
+        color: @color-555555;
+      }
+      .col-r {
+        color: @color-222222;
+        .copy {
+          display: inline;
+          font-size: 20rpx;
+          padding: 0 10rpx;
+          color: @color-C50F0F;
+          border: 2rpx solid @color-C50F0F;
+          border-radius: 4rpx;
+          margin-right: 8rpx;
+        }
+        &.color-r {
+          color: @color-C50F0F;
+        }
+      }
+      &.nobtn {
+        margin-bottom: 140rpx;
+      }
+    }
+    .pay-item {
+      .col-l {
+        border-radius: 0 !important;
+        border: 0 !important;
+        &::after {
+          border-radius: 0 !important;
+          border: 0 !important;
+        }
+      }
+      .col-r {
+        font-family: 'Bahnschrift';
+      }
+    }
+  }
+  .p-top {
+    padding-top: 100rpx;
+  }
+
+  .operation {
+    position: fixed;
+    height: 100rpx;
+    bottom: 0;
+    background: @color-C50F0F;
+    width: 100%;
+    text-align: center;
+    line-height: 100rpx;
+    color: @color-ffffff;
+    font-size: 32rpx;
+    .pay {
+      width: 100%;
+      display: flex;
+      .col-l {
+        width: 290rpx;
+        background: @color-ffffff;
+        color: @color-C50F0F;
+        flex: 0 0 auto;
+        box-sizing: border-box;
+        border-top: 2rpx solid @color-eeeeee;
+        border-radius: 0 !important;
+        line-height: 100rpx !important;
+        &::after {
+          border-radius: 0 !important;
+          border: 0 !important;
+        }
+      }
+      .col-r {
+        flex: 1 0 auto;
+        width: 50%;
+        &.contact {
+          background: none;
+          color: @color-ffffff;
+          border: 0;
+          line-height: 100rpx;
+        }
+      }
+    }
+  }
+}
+</style>

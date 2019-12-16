@@ -1,0 +1,313 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-07-25 11:46:51
+ * @lastTime: 2019-09-17 11:11:44
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="select-val">
+        <text class="province text {{value[0] ? '' : 'border-line'}}" data-name="{{value[0]}}" data-id="1" @tap="tabChange">{{value[0] ? value[0] : '请选择'}}</text>
+        <text class="city text {{value[1] ? '' : 'border-line'}}" data-name="{{value[1]}}" data-id="2" @tap="tabChange">{{value[1] ? value[1] : '请选择'}}</text>
+        <text class="county text {{value[2] ? '' : 'border-line'}}" data-name="{{value[2]}}" data-id="3" @tap="tabChange">{{value[2] ? value[2] : '请选择'}}</text>
+        <view class="line step{{move}} {{value[2] ? 'nostep' : ''}}"></view>
+      </view>
+      <view class="picker" style="transform: translateX(-{{100 * move}}%)">
+        <view class="col-province">
+          <view wx:for="{{province}}" data-name="{{item.name}}" @tap="provinceCheck" class="picker-item {{item.checked ? 'active' : ''}}" wx:key="index" vx:item="item">{{item.name}}</view>
+        </view>
+        <view class="col-city">
+          <scroll-view scroll-y>
+            <view wx:for="{{city}}" data-name="{{item.name}}" @tap="cityCheck" class="picker-item {{item.checked ? 'active' : ''}}" wx:key="index" vx:item="item">{{item.name}}</view>
+          </scroll-view>
+        </view>
+        <view class="col-county">
+          <scroll-view scroll-y>
+            <view wx:for="{{county}}" data-name="{{item.name}}" @tap="countyCheck" class="picker-item {{item.checked ? 'active' : ''}}" wx:key="index" vx:item="item">{{item.name}}</view>
+          </scroll-view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import mapData from './city.js'
+import navigationBar from '@/components/navigation-bar/index'
+export default class AddressCityPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  props = {}
+  methods = {}
+  components = {
+    navigationBar
+  }
+  data = {
+    title: '选择地区',
+    theme: 'while',
+    // 省
+    province: [],
+    // 市
+    city: [],
+    // 区
+    county: [],
+    // 选中的地址
+    value: [],
+    // 页面移动
+    move: 0
+  }
+  onLoad(option) {
+    let _self = this
+    this.value = option.address.split(',')
+    let address = this.value.filter(val => val)
+    if (address.length > 0) {
+      this.move = 2
+      for (let item of mapData) {
+        if (item.province === _self.value[0]) {
+          this.province.push({
+            name: item.province,
+            checked: true
+          })
+        } else {
+          this.province.push({
+            name: item.province,
+            checked: false
+          })
+        }
+        if (item.province === _self.value[0]) {
+          for (let icity of item.city) {
+            if (icity.name === _self.value[1]) {
+              this.city.push({
+                name: icity.name,
+                checked: true
+              })
+            } else {
+              this.city.push({
+                name: icity.name,
+                checked: false
+              })
+            }
+            if (icity.name === _self.value[1]) {
+              for (let icounty of icity.county) {
+                if (icounty === _self.value[2]) {
+                  this.county.push({
+                    name: icounty,
+                    checked: true
+                  })
+                } else {
+                  this.county.push({
+                    name: icounty,
+                    checked: false
+                  })
+                }
+              }
+            }
+          }
+        }
+      }
+    } else {
+      for (let item of mapData) {
+        this.province.push({
+          name: item.province,
+          checked: false
+        })
+      }
+    }
+    this.$apply()
+  }
+  methods = {
+    provinceCheck(e) {
+      const _self = this
+      let data = e.currentTarget.dataset
+      for (let item of this.province) {
+        item.checked = false
+        if (item.name === data.name) {
+          item.checked = true
+        }
+      }
+      this.value[0] = data.name
+      this.value[1] = ''
+      this.value[2] = ''
+      this.move = 1
+      this.county = []
+      for (let iprovince of mapData) {
+        if (iprovince.province === data.name) {
+          _self.city = []
+          for (let icity of iprovince.city) {
+            _self.city.push({
+              name: icity.name,
+              checked: false
+            })
+          }
+        }
+      }
+      this.$apply()
+    },
+    cityCheck(e) {
+      const _self = this
+      let data = e.currentTarget.dataset
+      for (let item of this.city) {
+        item.checked = false
+        if (item.name === data.name) {
+          item.checked = true
+        }
+      }
+      this.value[1] = data.name
+      this.value[2] = ''
+      this.county = []
+      this.move = 2
+      for (let iprovince of mapData) {
+        if (iprovince.province === this.value[0]) {
+          for (let icity of iprovince.city) {
+            if (icity.name === data.name) {
+              for (let icounty of icity.county) {
+                _self.county.push({
+                  name: icounty,
+                  checked: false
+                })
+              }
+            }
+          }
+        }
+      }
+    },
+    countyCheck(e) {
+      let data = e.currentTarget.dataset
+      for (let item of this.county) {
+        item.checked = false
+        if (item.name === data.name) {
+          item.checked = true
+        }
+      }
+      this.value[2] = data.name
+      wx.setStorageSync('ADDRESS', this.value)
+      wx.navigateBack({ delta: 1 })
+    },
+    tabChange(e) {
+      let _self = this
+      let checkVal = e.currentTarget.dataset.name || ''
+      let checkId = e.currentTarget.dataset.id || ''
+      if (checkVal) {
+        switch (checkId) {
+          case '1':
+            _self.move = 0
+            break
+          case '2':
+            _self.move = 1
+            break
+          case '3':
+            _self.move = 2
+            break
+          default:
+            break
+        }
+      }
+      this.$apply()
+    }
+  }
+}
+</script>
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+  }
+  .select-val {
+    height: 80rpx;
+    line-height: 80rpx;
+    flex: 0 0 auto;
+    border-bottom: 1px solid @color-eeeeee;
+    box-sizing: border-box;
+    display: flex;
+    position: relative;
+    .line {
+      position: absolute;
+      width: 100rpx;
+      height: 2rpx;
+      background: @color-C50F0F;
+      bottom: 0;
+      transition: all 0.3s;
+      &.step,
+      &.step0 {
+        left: 20rpx;
+      }
+      &.step1 {
+        left: 270rpx;
+      }
+      &.step2 {
+        left: 520rpx;
+      }
+      &.nostep {
+        display: none;
+      }
+    }
+    .text {
+      width: calc(100% / 3);
+      font-size: 24rpx;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      padding: 0 30rpx;
+      &.border-line {
+        position: relative;
+        color: @color-C50F0F;
+      }
+    }
+  }
+  .picker {
+    flex: 1 0 auto;
+    height: 50%;
+    display: flex;
+    transition: all 0.3s;
+    .col-province,
+    .col-city,
+    .col-county {
+      height: 100%;
+      overflow-y: scroll;
+      flex: 1 0 auto;
+      width: 100%;
+      padding: 0 30rpx;
+      box-sizing: border-box;
+      &::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        color: transparent;
+      }
+      .picker-item {
+        font-size: 24rpx;
+        height: 100rpx;
+        line-height: 100rpx;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        &.active {
+          color: @color-C50F0F;
+        }
+      }
+    }
+  }
+}
+</style>

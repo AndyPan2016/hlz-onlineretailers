@@ -1,0 +1,175 @@
+<!--
+ * @Description: 浏览记录
+ * @Author: huyanhai
+ * @since: 2019-08-14 16:16:20
+ * @lastTime: 2019-09-17 10:29:33
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="browsing-text">
+        最多为您展示近100条浏览记录
+      </view>
+      <scroll-view scroll-y class="scroll-box" bindscrolltolower="onScrollLowerFn">
+        <view class="browsing-list" wx:if="{{dataList.length>0}}">
+          <view class="list-item" wx:for="{{dataList}}" @tap="toGoods" data-item="{{item}}">
+            <view class="item-l">
+              <image class="ui-img" src="{{item.coverImage}}" mode="aspectFill" />
+            </view>
+            <view class="item-r">
+              <text class="text">{{item.goodsCaption}}</text>
+              <view class="price">￥{{item.price}}</view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { STATUS } from '@/configs'
+import { GoodsDetailService } from '../services'
+import { Tips } from '@/utils'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class browsingPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    userNo: '',
+    start: '1',
+    limit: '6',
+    totalPages: '',
+    dataList: [],
+    title: '浏览记录',
+    theme: 'while'
+  }
+  components = {
+    navigationBar
+  }
+  onScrollLowerFn() {
+    if (this.totalPages > this.start - 1 * this.limit) {
+      this.getBrowsing()
+    }
+  }
+  getBrowsing(parmes) {
+    let parme = Object.assign({}, parmes)
+    parme['userNo'] = this.userNo
+    parme['start'] = parme['start'] || this.start
+    parme['limit'] = parme['limit'] || this.limit
+    GoodsDetailService.userGoodsHistoryPageQuery({ data: parme }).then(res => {
+      if (res.data.success) {
+        this.totalPages = res.data.totalRows
+        if (this.start === 1) {
+          this.dataList = res.data.rows
+        } else {
+          for (let item of res.data.rows) {
+            this.dataList.push(item)
+          }
+        }
+        this.start++
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  toGoods(e) {
+    let goodsNo = e.currentTarget.dataset.item.goodsNo
+    wepy.navigateTo({ url: 'goods-detail?id=' + goodsNo })
+  }
+  onLoad() {
+    this.userNo = wepy.getStorageSync(STATUS.USER_NO)
+    this.getBrowsing({
+      start: 1
+    })
+    this.$apply()
+  }
+  onShow() {}
+}
+</script>
+
+<style lang='less'>
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    height: 50vh;
+    overflow: hidden;
+    overflow-y: scroll;
+    flex: columns;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .browsing-text {
+    font-size: 26rpx;
+    color: @color-888888;
+    height: 80rpx;
+    line-height: 80rpx;
+    text-align: center;
+    flex: 0 0 auto;
+  }
+  .scroll-box {
+    height: 50vh;
+    flex: 1 0 auto;
+  }
+  .browsing-list {
+    padding-bottom: 20rpx;
+    .list-item {
+      background: @color-ffffff;
+      box-sizing: border-box;
+      padding: 30rpx;
+      display: flex;
+      margin-bottom: 20rpx;
+      &:last-child {
+        margin-bottom: 0rpx;
+      }
+      .item-l {
+        width: 200rpx;
+        height: 200rpx;
+        flex: 0 0 auto;
+        background: gray;
+        .ui-img {
+          width: 200rpx;
+          height: 200rpx;
+        }
+      }
+      .item-r {
+        flex: 1 0 auto;
+        margin-left: 30rpx;
+        position: relative;
+        line-height: 40rpx;
+        width: 50%;
+        .text {
+          font-size: 26rpx;
+          color: @color-222222;
+        }
+        .price {
+          font-size: 32rpx;
+          font-family: 'Bahnschrift';
+          color: @color-C50F0F;
+          position: absolute;
+          bottom: 0;
+          left: 0;
+        }
+      }
+    }
+  }
+}
+</style>

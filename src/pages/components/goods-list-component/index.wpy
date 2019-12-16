@@ -1,0 +1,87 @@
+<!--
+  商品列表组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年5月9日15:29:43
+  @LastUpdateDate: 2019年5月9日15:29:51
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import './view.less';
+.no-more {
+  display: block;
+  width: 100%;
+  margin-top: 40rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #888888;
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="{{ 'goods-list-component' }}">
+    <data-set :dataset.sync="dataset" :nullTip.sync="nullTip" :nullImg.sync="nullImg" :loadingTip.sync="loadingTip">
+      <view slot="dataset-slot" class="goods-dataset-slot">
+        <repeat for="{{dataset}}" key="index" index="index" item="item">
+          <view class="goods-list-item" data-id="{{item.goodsNo}}" @tap="listItemTap">
+            <view class="goods-item-wrap">
+              <image class="goods-item-thumb" mode='aspectFill' src="{{item.coverImg}}" />
+              <text class="goods-item-title">{{item.goodsCaption}}</text>
+              <view class="goods-item-foot">
+                <text class="goods-price">￥{{item.price || item.discountPrice}}</text>
+                <view class="goods-label">
+                  <text class="label-item isnew" wx:if="{{item.isNew =='yes'}}">上新</text>
+                  <text class="label-item" wx:for="{{item.activeList}}" wx:key="index">满减</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </repeat>
+      </view>
+    </data-set>
+    <text class="no-more" wx:if="{{noData && !nullImg}}">没有更多了~</text>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+import DataSetComponent from '@/components/dataset-component/index'
+
+export default class GoodsListComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 数据集合
+    dataset: { type: Array | String, twoWay: true },
+    // 为空提示
+    nullTip: { type: String | Object },
+    // 数据为空时暂时缺省图
+    nullImg: { type: Boolean, default: false },
+    // 加载中提示
+    loadingTip: { type: String | Object },
+    noData: {
+      type: Boolean,
+      default: false
+    }
+  }
+  // 模板(绑定)数据
+  data = {}
+
+  components = {
+    'data-set': DataSetComponent
+  }
+
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  methods = {
+    listItemTap(e) {
+      let dataset = e.currentTarget.dataset
+      wepy.navigateTo({ url: 'goods-detail?id=' + dataset.id })
+    }
+  }
+}
+</script>

@@ -1,0 +1,267 @@
+<!--
+ * @Description: 订单跟踪
+ * @Author: huyanhai
+ * @since: 2019-07-03 16:41:26
+ * @lastTime: 2019-10-30 17:34:00
+ -->
+
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <block wx:if="{{orderTrackList.length>0}}">
+      <view class="info">承运人：<text class="logistics">{{logisticsName}}</text></view>
+      <view class="page">
+        <scroll-view class="scoll" scroll-y bindscrolltolower="scollGetOrderConsignee">
+          <view class="box">
+            <view class="track-list" wx:for="{{orderTrackList}}" wx:key="index">
+              <view class="track-item">
+                <view class="track-top">
+                  <view class="col-l">快递运单号：<text class="number">{{item.logisticsNo}}</text></view>
+                  <view class="col-r color">{{orderStateMap[item.logisticsProcess]}}</view>
+                </view>
+                <view class="track-btm">
+                  <view class="top">
+                    <text class="text">{{item.consignee}}</text>
+                    <text class="text">{{item.mobileNo}}</text>
+                  </view>
+                  <text class="text">{{item.province}}{{item.city}}{{item.town}}{{item.address}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </block>
+    <block wx:elif="{{cartLogData.length>0}}">
+      <view class="page">
+        <scroll-view class="scoll" scroll-y bindscrolltolower="scollGetOrderConsignee">
+          <view class="box">
+            <view class="track-list" wx:for="{{cartLogData}}" wx:key="index">
+              <view class="track-item">
+                <view class="track-top">
+                  <view class="col-l">{{item.logisticsName}}:<text class="number">{{item.logisticsNo}}</text></view>
+                  <view class="col-r color">{{orderStateMap[item.status]}}</view>
+                </view>
+                <view class="track-box">
+                  <view class="track-img" wx:for="{{item.goodsBuyInfoList}}">
+                    <image src="{{item.coverImage}}" class="ui-img" />
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </block>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { AddressService } from '../services'
+import { Tips } from '@/utils'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class LogisticsPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    // 商品订单号
+    orderTrackList: [],
+    orderNo: '',
+    start: 1,
+    limit: 6,
+    // 订单状态
+    orderStateMap: {
+      PENDING_PAYMENT: '待付款',
+      PAY_FAILED: '支付失败',
+      CANCELED: '已取消',
+      CLOSED: '已关闭',
+      IN_THE_STOCK: '备货中',
+      PAY_PROCESSING: '支付处理中',
+      PREPARE_OUT_STOCK: '待出库',
+      PENDINGSHIPMENT: '待发货',
+      SHIPPED: '已发货',
+      COMPLETED: '已完成',
+      COMMENT: '已评价',
+      FINISH: '已签收'
+    },
+    orderTracktotal: '',
+    title: '订单跟踪',
+    theme: 'while',
+    cartLog: '',
+    logisticsName: '',
+    cartLogData: []
+  }
+  components = {
+    navigationBar
+  }
+  onLoad(opthon) {
+    this.orderNo = opthon.orderNo || ''
+    this.cartLog = opthon.cartLog || ''
+    this.logisticsName = opthon.logisticsName || ''
+    this.$apply()
+  }
+  onShow() {
+    if (this.cartLog !== '') {
+      this.getorderDistributeList()
+    } else {
+      this.getOrderConsignee()
+    }
+  }
+  /**
+   * 查询订单收货人
+   */
+  getOrderConsignee() {
+    AddressService.orderConsigneeInfoList({
+      data: {
+        orderNo: this.orderNo,
+        limit: this.limit,
+        start: this.start
+      }
+    })
+      .then(res => {
+        let result = res.data
+        if (result.success) {
+          this.orderTracktotal = result.totalRows
+          if (this.start > 1) {
+            for (let item of result.rows) {
+              this.orderTrackList.push(item)
+            }
+          } else {
+            this.orderTrackList = result.rows || []
+          }
+          this.start++
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 单地址多订单
+   */
+  getorderDistributeList() {
+    AddressService.orderDistributeList({
+      data: {
+        orderNo: this.orderNo
+      }
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.cartLogData = data.orderDistributeDtoList
+          this.$apply()
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  methods = {
+    scollGetOrderConsignee() {
+      if ((this.start - 1) * this.limit < this.orderTracktotal) {
+        this.getOrderConsignee()
+      }
+    }
+  }
+}
+</script>
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    overflow: hidden;
+    height: 50vh;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  .scoll {
+    width: 100%;
+    height: calc(100vh - 80rpx);
+    .box {
+      padding: 0 30rpx;
+    }
+  }
+  .info {
+    color: @color-555555;
+    font-size: 26rpx;
+    height: 60rpx;
+    line-height: 60rpx;
+    margin-top: 20rpx;
+    padding: 0 30rpx;
+    .logistics {
+      color: @color-222222;
+    }
+  }
+  .track-list {
+    .track-item {
+      background: @color-ffffff;
+      border-radius: 8rpx;
+      border-left: 8rpx solid rgba(255, 76, 47, 0.2);
+      margin-top: 20rpx;
+      &:last-child {
+        margin-bottom: 20rpx;
+      }
+      .track-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 24rpx;
+        color: @color-333333;
+        height: 80rpx;
+        line-height: 80rpx;
+        border-bottom: 2rpx solid @color-eeeeee;
+        box-sizing: border-box;
+        padding: 0 30rpx;
+        .color {
+          color: @color-FF2E28;
+        }
+      }
+      .track-btm {
+        padding: 20rpx 30rpx;
+        box-sizing: border-box;
+        font-size: 26rpx;
+        color: @color-333333;
+        line-height: 44rpx;
+        .text {
+          margin-right: 10rpx;
+        }
+      }
+      .track-box {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 20rpx 30rpx;
+        .track-img {
+          width: 110rpx;
+          height: 110rpx;
+          margin-right: 20rpx;
+          margin-bottom: 20rpx;
+          flex: 0 0 auto;
+          .ui-img {
+            width: 100%;
+            height: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+</style>

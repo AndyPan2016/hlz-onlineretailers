@@ -1,0 +1,471 @@
+<!--
+  footer组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年4月26日10:41:12
+  @LastUpdateDate: 2019年4月26日10:41:15
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.footer-component {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  min-height: 100rpx;
+  z-index: 10;
+  .box-model();
+  height: calc(50rpx + constant(safe-area-inset-bottom));
+  height: calc(50rpx + env(safe-area-inset-bottom));
+
+  .custom-popup {
+    .popup-main {
+      width: 75%;
+      .border-radius(16rpx);
+      .box-shadow(0 0 20px rgba(0, 0, 0, 0));
+      .popup-foot {
+        border: none;
+        height: auto;
+        line-height: auto;
+      }
+      .popup-button-slot {
+        height: 115rpx;
+        line-height: 115rpx;
+        background: @color-C50F0F;
+        font-size: 30rpx;
+        color: #fff;
+        text-align: center;
+      }
+    }
+  }
+
+  .popup-body-cont-slot {
+    height: 220rpx;
+    margin: 0;
+    text-align: center;
+
+    .tip-text-success {
+      display: inline-block;
+      width: 100%;
+      font-size: 40rpx;
+    }
+    .tip-text-remark {
+      display: inline-block;
+      width: 100%;
+      margin: 30rpx auto;
+    }
+
+    .icon-popup-success {
+      display: inline-block;
+      width: 100%;
+      height: 87rpx;
+      background: url('@{base64-icon-success}') center 0 no-repeat;
+      background-size: auto 100%;
+      margin-top: -30rpx;
+      margin-bottom: 30rpx;
+    }
+    .popup-tip-text {
+      display: inline-block;
+      width: 100%;
+      font-size: 30rpx;
+      line-height: 32rpx;
+      color: #555555;
+    }
+  }
+
+  .footer-item {
+    background: #fff;
+    color: @color-C50F0F;
+    text-align: center;
+    .box-flex(1);
+    justify-content: center;
+    align-items: center;
+    &.box-flex-2 {
+      .box-flex(2);
+    }
+    &.box-flex-3 {
+      .box-flex(3);
+    }
+    &.box-flex-4 {
+      .box-flex(4);
+    }
+    &.box-flex-5 {
+      .box-flex(5);
+      vertical-align: middle;
+    }
+
+    .icon-text {
+      display: inline-block;
+      width: 100%;
+      height: 30rpx;
+      line-height: 30rpx;
+      text-align: center;
+    }
+    .label-text {
+      color: @color-333333;
+      font-size: 28rpx;
+      margin-right: 10rpx;
+    }
+
+    // 类型
+    &.icon-text {
+      position: relative;
+      z-index: 1;
+      .icon-thumb {
+        width: 32rpx;
+        height: 40rpx;
+        display: inline-block;
+        margin: 0rpx auto;
+        margin-top: 16rpx;
+        &.icon-customer {
+          width: 36rpx;
+          height: 36rpx;
+          background: url('@{base64-icon-customer}') 0 0 no-repeat;
+          background-size: 100% 100%;
+        }
+        &.icon-shopcart {
+          width: 36rpx;
+          height: 36rpx;
+          background: url('@{base64-icon-shopcart}') 0 0 no-repeat;
+          background-size: 100% 100%;
+        }
+      }
+      .icon-text {
+        float: left;
+        font-size: 20rpx;
+        margin-top: -5rpx;
+      }
+    }
+    &.text {
+      position: relative;
+      z-index: 10;
+      width: 100rpx;
+      &:before {
+        content: '';
+        display: inline-block;
+        vertical-align: middle;
+        height: 100%;
+      }
+      .icon-thumb {
+        display: none;
+      }
+      .icon-text {
+        font-size: 30rpx;
+        display: block;
+        margin-top: -14rpx;
+        float: inherit;
+        &::after {
+          border-radius: 0;
+        }
+        &.reset {
+          line-height: 100rpx;
+          margin-top: 0;
+          display: inline;
+        }
+      }
+    }
+
+    // 主题
+    &.default {
+      border-top: 1rpx solid #eee;
+    }
+    &.primary {
+      border-top: 1rpx solid #DE2828;
+      background: #DE2828;
+      color: #fff;
+    }
+    &.yellow {
+      border-top: 1rpx solid @color-FFAA00;
+      background: @color-FFAA00;
+      color: #fff;
+    }
+    &.hotel-reserve {
+      border-top: 1rpx solid #ccc;
+      background: #ccc;
+    }
+  }
+  button {
+    &::after {
+      border: 0;
+    }
+  }
+  button.footer-item {
+    margin: initial;
+    padding: initial;
+    border-radius: 0;
+    line-height: initial;
+    border: 0;
+    position: initial;
+    &::after {
+      border-radius: 0;
+    }
+    .icon-text {
+      color: @color-222222;
+    }
+    .cart-num {
+      position: absolute;
+      min-width: 40rpx;
+      height: 40rpx;
+      line-height: 38rpx;
+      background: #FF4C2F;
+      font-size: 24rpx;
+      color: @color-ffffff;
+      border-radius: 30rpx;
+      // padding: 0 15rpx;
+      text-align: center;
+      top: 10rpx;
+      left: 50%;
+    }
+  }
+  .navigator-tab {
+    background: #ffffff;
+    opacity: 1;
+    background: #fff;
+    color: @color-C50F0F;
+    text-align: center;
+    .box-flex(1);
+    &::after {
+      background: none;
+    }
+    &:after {
+      background: none;
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="{{ 'footer-component' + (' ' + class) }}" @tap="footerItemTap">
+    <repeat for="{{dataset}}" key="index" index="index" item="item">
+      <button wx:if="{{item.key === 'customer'}}" open-type="contact" session-from="weapp" class="{{ 'footer-item' + (item.type ? ' ' + item.type : '') + (item.theme ? ' ' + item.theme : '') + (item.boxFlex ? ' box-flex-' + item.boxFlex : '') }}" :class="{iphonex:iphoneX}" data-key="{{item.key}}" data-data="{{item.data}}">
+        <i wx:if="{{item.class}}" class="{{ 'icon-thumb ' + (item.class)}}" data-key="{{item.key}}" data-data="{{item.data}}"></i>
+        <image wx:if="{{item.icon}}" src="{{item.icon}}" class="icon-thumb" data-key="{{item.key}}" data-data="{{item.data}}" />
+        <text class="icon-text {{item.isreset ? 'reset' : ''}}" data-key="{{item.key}}" data-data="{{item.data}}">
+          <text class="label-text" wx:if="{{item.labelText}}">{{
+            item.labelText
+            }}</text>{{ item.text }}
+        </text>
+      </button>
+      <!-- <navigator url="cart" open-type="navigate" wx:elif="{{item.key === 'cart'}}" class="navigator-tab"> -->
+      <button wx:elif="{{item.key === 'cart'}}" class="{{ 'footer-item' + (item.type ? ' ' + item.type : '') + (item.theme ? ' ' + item.theme : '') + (item.boxFlex ? ' box-flex-' + item.boxFlex : '') }}" :class="{iphonex:iphoneX}" data-key="{{item.key}}" data-data="{{item.data}}">
+        <i wx:if="{{item.class}}" class="{{ 'icon-thumb ' + (item.class)}}" data-key="{{item.key}}" data-data="{{item.data}}"></i>
+        <image wx:if="{{item.icon}}" src="{{item.icon}}" class="icon-thumb" data-key="{{item.key}}" data-data="{{item.data}}" />
+        <text class="icon-text {{item.isreset ? 'reset' : ''}}" data-key="{{item.key}}" data-data="{{item.data}}">
+          <text class="label-text" wx:if="{{item.labelText}}">{{item.labelText}}</text>{{ item.text }}
+        </text>
+        <i class="cart-num" wx:if="{{item.key === 'cart' && item.num>0}}">{{item.num > 99 ? '99+' : item.num}}</i>
+      </button>
+      <!-- </navigator> -->
+      <view wx:else class="{{ 'footer-item' + (item.type ? ' ' + item.type : '') + (item.theme ? ' ' + item.theme : '') + (item.boxFlex ? ' box-flex-' + item.boxFlex : '') }}" :class="{iphonex:iphoneX}" data-key="{{item.key}}" data-data="{{item.data}}">
+        <i wx:if="{{item.class}}" class="{{ 'icon-thumb ' + (item.class)}}" data-key="{{item.key}}" data-data="{{item.data}}"></i>
+        <image wx:if="{{item.icon}}" src="{{item.icon}}" class="icon-thumb" data-key="{{item.key}}" data-data="{{item.data}}" />
+        <text class="icon-text {{item.isreset ? 'reset' : ''}}" data-key="{{item.key}}" data-data="{{item.data}}">
+          <text class="label-text" wx:if="{{item.labelText}}">{{
+            item.labelText
+            }}</text>{{ item.text }}
+        </text>
+      </view>
+    </repeat>
+    <user-authorize :onAuthorizeAll="onAuthorizeAllFnFooter" :authorizeType.sync="authorizeType" />
+    <popup :isShowHead="boolFalse" :buttons="boolFalse" class="custom-popup">
+      <view slot="popup-body-cont" class="popup-body-cont-slot">
+        <i class="icon-popup-success"></i>
+        <text class="popup-tip-text">
+          <text class="tip-text-success">预约成功</text>
+          <text class="tip-text-remark">稍后商家将会联系您，请留意电话接听</text>
+        </text>
+      </view>
+      <view slot="popup-button-slot" class="popup-button-slot">我知道了</view>
+    </popup>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+// import FooterComponent from './view'
+// export default FooterComponent
+
+import wepy from 'wepy'
+import { Tips } from '@/utils'
+import { STATUS } from '@/configs'
+import UserAuthorizeComponent from '@/components/user-authorize-component/index'
+import PopupComponent from '@/components/popup-component/index'
+import { CommonsService } from '@/services'
+
+export default class FooterComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 自定义class
+    class: { type: String },
+    // 底部数据
+    dataset: {
+      type: Array,
+      default: [
+        {
+          key: 'my',
+          type: 'icon-text',
+          theme: 'default',
+          class: 'icon-my',
+          text: '我的'
+        },
+        {
+          key: 'appointment',
+          type: 'text',
+          theme: 'primary',
+          text: '立即预约',
+          boxFlex: 1
+        }
+      ]
+    },
+    // 底部项点击事件
+    onFooterItemTap: { type: Function }
+  }
+  components = {
+    // 用户认证授权组件
+    'user-authorize': UserAuthorizeComponent,
+    // 弹出框
+    popup: PopupComponent
+  }
+  // 模板(绑定)数据
+  data = {
+    // true/false变量
+    boolTrue: true,
+    boolFalse: false,
+    isAuthPhone: false,
+    iphoneX: false,
+    authorizeType: ['WXLogin', 'AccountInfo', 'UserInfo']
+  }
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  /**
+   * 获取成员信息
+   * @remark: 如果手机号码存在，则设置缓存，不需要再验证手机号码授权
+   */
+  getMemberInfo() {
+    let that = this
+    let userNo =
+      wepy.getStorageSync(STATUS.USER_NO) ||
+      (wepy.getStorageSync(STATUS.USER_SPECIAL_INFO) || {}).userNo
+    if (userNo) {
+      CommonsService.memberInfo({
+        data: {
+          userNo: userNo
+        }
+      })
+        .then(res => {
+          let memberInfo = res.data.memberInfo || {}
+          let mobileNo = memberInfo.mobileNo
+          if (mobileNo) {
+            wepy.setStorageSync(STATUS.IS_AUTH_PHONE, true)
+            wepy.setStorageSync(STATUS.PHONE_NUMBER, mobileNo)
+            that.isAuthPhone = true
+            that.$apply()
+            this.hotelBanquetReserve({ userNo, mobileNo })
+            // this.hotelBanquetReserve({ userNo })
+          } else {
+            this.authorizeType = [
+              'WXLogin',
+              'AccountInfo',
+              'UserInfo',
+              'PhoneNumber'
+            ]
+            this.$apply()
+            this.$invoke('user-authorize', 'authorizeActivation')
+          }
+        })
+        .catch(error => {
+          Tips.error(error.message)
+        })
+    }
+  }
+
+  onAuthorizeAllFnFooter(data) {
+    // this.hotelBanquetReserve({mobileNo: data.phoneNumber, userNo: data.userNo || wepy.getStorageSync(STATUS.USER_NO)})
+    this.getMemberInfo()
+    // this.hotelBanquetReserve({mobileNo: data.phoneNumber, userNo: data.userNo || wepy.getStorageSync(STATUS.USER_NO)})
+  }
+
+  hotelBanquetReserve(params = {}) {
+    params['hotelId'] = wepy.getStorageSync(STATUS.HOTEL_ID)
+    CommonsService.hotelBanquetReserve({ data: params })
+      .then(res => {
+        if (res.data.success) {
+          // Tips.msg('预约成功')
+          this.$invoke('popup', 'open')
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  fn = {
+    /**
+     * 立即预约
+     */
+    appointment() {
+      let mobileNo = wepy.getStorageSync(STATUS.PHONE_NUMBER)
+      let userNo = wepy.getStorageSync(STATUS.USER_NO)
+      if (mobileNo && userNo) {
+        this.hotelBanquetReserve({ mobileNo, userNo })
+      } else if (!mobileNo && userNo) {
+        this.getMemberInfo()
+      } else {
+        this.authorizeType = [
+          'WXLogin',
+          'AccountInfo',
+          'UserInfo',
+          'PhoneNumber'
+        ]
+        this.$apply()
+        this.$invoke('user-authorize', 'authorizeActivation')
+      }
+    },
+    /**
+     * 我的
+     */
+    my() {
+      wepy.navigateTo({ url: 'personal-center' })
+    }
+  }
+
+  methods = {
+    /**
+     * 底部项点击事件
+     * @param {Object} e Event对象
+     */
+    footerItemTap(e) {
+      let dataset = e.target.dataset || {}
+      let eventResult
+
+      // 响应on事件
+      let onFooterItemTap = this.onFooterItemTap
+      if (onFooterItemTap) {
+        eventResult = onFooterItemTap.call(this.$parent, dataset, e)
+      }
+
+      // 触发用户事件
+      this.$emit('onFooterItemTap', dataset, status => {
+        eventResult = status
+      })
+      if (eventResult !== false) {
+        let key = dataset.key
+        let fn = this.fn[key]
+        if (fn) {
+          fn.call(this)
+        }
+      }
+    }
+  }
+
+  onLoad() {
+    this.$apply()
+  }
+}
+</script>

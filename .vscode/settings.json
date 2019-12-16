@@ -1,0 +1,62 @@
+{
+  "vetur.format.defaultFormatter.html": "js-beautify-html",
+  "vetur.format.defaultFormatter.js": "prettier",
+  "vetur.format.defaultFormatter.less": "prettier",
+  "files.autoSave": "off", //打开自动保存
+  "prettier.singleQuote": true, // 使用带引号替代双引号
+  "prettier.semi": false, // 去掉代码结尾的分号
+  "javascript.format.insertSpaceBeforeFunctionParenthesis": true, // 让函数(名)和后面的括号之间加个空格
+  "javascript.format.insertSpaceAfterSemicolonInForStatements": false,
+  "javascript.implicitProjectConfig.checkJs": true,
+  "typescript.format.insertSpaceAfterSemicolonInForStatements": false,
+  "prettier.eslintIntegration": true, // 支持
+  "editor.tabSize": 2,
+  "team.showWelcomeMessage": false,
+  "diffEditor.ignoreTrimWhitespace": true,
+  "git.confirmSync": false,
+  "element-helper.version": "2.5",
+  // 制表符符号eslint
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  "files.associations": {
+    "*.html": "html",
+    "*.xhtml": "html",
+    "*.wpy": "vue"
+  },
+  "[django-html]": {},
+  // 对vue中错误进行检查
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    {
+      "language": "vue",
+      "autoFix": true
+    }
+  ],
+  // git自动更新
+  "git.autofetch": true,
+  "html.suggest.html5": true,
+  "html.format.indentInnerHtml": true,
+  "javascript.implicitProjectConfig.experimentalDecorators": true,
+  "docker.groupImagesBy": "None",
+  // 图标主题
+  // 文档头部注释
+  "fileheader.customMade": {
+    "Description": "",
+    "Author": "huyanhai",
+    "Date": "Do not edit",
+    "LastEditTime": "Do not edit"
+  },
+  // 方法注释
+  "fileheader.configObj": {
+    "specialOptions": {
+      "Date": "since",
+      "LastEditTime": "lastTime"
+    }
+  },
+  "workbench.iconTheme": "vscode-icons",
+  "workbench.colorTheme": "One Dark Pro Bold"
+}

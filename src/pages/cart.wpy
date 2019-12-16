@@ -1,0 +1,777 @@
+<!--
+ * @Description: 个人中心
+ * @Author: huyanhai
+ * @since: 2019-08-14 14:13:33
+ * @lastTime: 2019-10-31 15:57:59
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="cart-list">
+        <view class="list-data" wx:if="{{chartData && chartData.length>0}}">
+          <view class="list-text">全部商品({{total}})</view>
+          <scroll-view class="ui-repeart" scroll-y bindscrolltolower="loadMore">
+            <checkbox-group bindchange="bindchange">
+              <repeat for="{{chartData}}" key="index" index="index" item="item">
+                <view class="repeart-item" data-index="{{index}}" bindtouchstart="touchstartEvent" bindtouchmove="touchmoveEvent" bindtouchend="touchendEvent">
+                  <view class="list {{item.isTouchMove ? 'touch-move-active' : ''}}">
+                    <checkbox class="radio" data-index="{{index}}" value="{{item.productNo}}" checked="{{item.checked}}" color="#c50f0f" disabled="{{item.isLower}}" />
+                    <view class="info {{item.isLower ? 'lower' : ''}}">
+                      <view class="img">
+                        <image class="ui-img" src="{{item.coverImage}}" />
+                        <view class="lower-box" wx:if="{{item.isLower}}"></view>
+                      </view>
+                      <view class="text">
+                        <view class="t-text">{{item.goodsCaption}}</view>
+                        <text class="s-text">{{item.specifications}}</text>
+                        <text class="num" wx:if="{{!item.isLower}}">￥{{item.price}}</text>
+                        <view class="num num-lower" wx:else>￥{{item.price}}<text class="text">X{{item.quantity}}</text></view>
+                      </view>
+                      <view class="operation" wx:if="{{!item.isLower}}">
+                        <view class="add" @tap="add" data-item="{{item}}" data-index="{{index}}"></view>
+                        <input class="number" type="number" value="{{item.quantity}}" disabled="disabled" />
+                        <view class="reduce" @tap="reduce" data-item="{{item}}" data-index="{{index}}"></view>
+                      </view>
+                    </view>
+                  </view>
+                  <view class="dedele" @tap="delCart" data-item="{{item}}"></view>
+                </view>
+              </repeat>
+            </checkbox-group>
+          </scroll-view>
+          <view class="null"></view>
+        </view>
+        <view class="no-data" wx:else>
+          <image class="img-null" src="https://media.ihunlizhe.com/market/assets/images/nodetail.png" />
+          购物车内无商品，多逛逛吧~
+        </view>
+      </view>
+      <view class="order-operation" wx:if="{{chartData && chartData.length>0}}">
+        <view class="col-l">全选
+          <checkbox class="radio" color="#c50f0f" @tap="checkedAll" checked="{{isCheckedAll}}" />
+        </view>
+        <view class="col-m">
+          <text class="ui-text">合计：￥</text>
+          <text class="ui-num">{{totalPrice}}</text>
+        </view>
+        <view class="col-r go-buy" :class="{active:btnEnable}" @tap="gobuy">去结算</view>
+      </view>
+    </view>
+    <user-authorize :onAuthorizeAll="onAuthorizeAllFn" :authorizeType="authorizeType" :onCloseAuthorize="onCloseAuthorizeFn" />
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import UserAuthorizeComponent from '@/components/user-authorize-component/index'
+import { IndexService, ShopCartService } from '../services'
+import { STATUS, Tips } from '@/configs'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class cartPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    personalInfo: {},
+    userNo: '',
+    messageCount: '',
+    isLower: 0, // 已下家商品数量
+    // 购物车数据
+    chartData: [],
+    title: '购物车',
+    theme: 'while',
+    touchstart: 0,
+    touchmove: 0,
+    range: 0,
+    isCheckedAll: false,
+    // 购物车页数
+    pageNo: 0,
+    // 购物车页码
+    start: 1,
+    // 页条数
+    limit: 99,
+    // 总数据条数
+    total: 0,
+    // 商品总金额
+    totalPrice: 0,
+    // 按钮能否点击
+    btnEnable: true
+  }
+  // 组件
+  components = {
+    'user-authorize': UserAuthorizeComponent,
+    navigationBar
+  }
+  /**
+   * 购物车数量操作
+   */
+  changeGoodsNum(e, type) {
+    let item = e.currentTarget.dataset.item
+    let index = e.currentTarget.dataset.index
+    if (type === 'add' && !item.isLower) {
+      this.chartData[index].quantity++
+      if (!item.checked) return
+      this.totalPrice = Number(this.totalPrice) + Number(item.price || 0)
+      this.updateCart({
+        id: item.id,
+        num: this.chartData[index].quantity
+      })
+    } else {
+      if (item.minOrderNum < item.quantity) {
+        this.chartData[index].quantity--
+        if (!item.checked) return
+        this.totalPrice = Number(this.totalPrice) - Number(item.price || 0)
+        this.updateCart({
+          id: item.id,
+          num: this.chartData[index].quantity
+        })
+      }
+    }
+
+    this.totalPrice = Number(this.totalPrice).toFixed(2)
+    this.$apply()
+  }
+  add(e) {
+    this.changeGoodsNum(e, 'add')
+  }
+  reduce(e) {
+    this.changeGoodsNum(e, 'reduce')
+  }
+  loadMore() {
+    if (this.total > (this.start - 1) * this.limit) {
+      this.queryCart()
+    }
+  }
+  delCart(e) {
+    let id = e.currentTarget.dataset.item.id
+    this.delectCart({
+      idList: [id]
+    })
+  }
+  /**
+   * 更新购物车
+   */
+  updateCart(parme) {
+    let parmes = { ...parme }
+    parmes['userNo'] = this.userNo
+    ShopCartService.shopCartUpdate({
+      data: parmes
+    })
+      .then(res => {
+        // 修改商品数量成功
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 查询购物车
+   */
+  queryCart(parme) {
+    let timer
+    let parmes = { ...parme }
+    if (timer) clearTimeout(timer)
+    parmes['userNo'] = this.userNo
+    parmes['start'] = this.start
+    parmes['limit'] = this.limit
+    ShopCartService.shopCartPageQuery({
+      data: parmes
+    }).then(res => {
+      let data = res.data
+      if (data.success) {
+        data.rows.forEach(item => {
+          item['isTouchMove'] = false
+          item['isLower'] = item.marketableStatus === 'NO'
+          if (item['isLower']) {
+            this.isLower++
+            item['checked'] = false
+          } else {
+            let isChecked = wx.getStorageSync(STATUS.CART_ISUNCHECKED) || {}
+            if (isChecked[item.id]) {
+              this.totalPrice =
+                Number(this.totalPrice) + Number(item.price || 0) * item.quantity
+              item['checked'] = true
+              this.isCheckedAll = true
+            }
+          }
+        })
+        if (this.isLower > 0) {
+          this.isCheckedAll = true
+        }
+        this.chartData = data.rows
+        this.start++
+        this.total = data.totalRows
+        this.totalPrice = Number(this.totalPrice).toFixed(2)
+        this.$apply()
+      } else {
+        Tips.error(data.message)
+      }
+    })
+  }
+  /**
+   * 购物车删除货物
+   */
+  delectCart(parme) {
+    let parmes = { ...parme }
+    parmes['userNo'] = this.userNo
+    ShopCartService.shopCartDelete({
+      data: parmes
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.start = 1
+          this.queryCart()
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  /**
+   * 用户是否有未读消息
+   */
+  checkUserMassage() {
+    let parme = {}
+    parme['userNo'] = this.userNo
+    parme['clientType'] = 'SHOP_C_MINI'
+    IndexService.userNotReadNoticeCount({
+      data: parme
+    }).then(res => {
+      if (res.data.success) {
+        this.messageCount = res.data.count ? res.data.count.toString() : ''
+        if (this.messageCount) {
+          wx.showTabBarRedDot({
+            index: 2
+          })
+        }
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  onAuthorizeAllFn(data) {
+    let userInfo = data.userInfo
+    wepy.setStorageSync(STATUS.USER_INFO, userInfo)
+    wepy.setStorageSync(STATUS.USER_NO, data.userNo)
+    this.personalInfo = {
+      thumb: userInfo.avatarUrl,
+      name: userInfo.nickName,
+      id: data.userNo
+    }
+    this.userNo = data.userNo
+    this.checkUserMassage()
+    this.queryCart()
+    this.$apply()
+  }
+
+  /**
+   * 授权被用户关闭，返回上一页面
+   */
+  onCloseAuthorizeFn() {
+    Tips.error('您取消的授权')
+  }
+  goMessage() {
+    wepy.navigateTo({ url: 'message-center?messageCount=' + this.messageCount })
+  }
+  touchstartEvent(e) {
+    for (let item of this.chartData) {
+      item.isTouchMove = false
+    }
+    this.touchstart = e.touches[0].clientX
+  }
+  touchmoveEvent(e) {
+    this.touchmove = e.touches[0].clientX
+    this.range = this.touchmove - this.touchstart
+    this.$apply()
+  }
+  touchendEvent(e) {
+    let index = e.currentTarget.dataset.index
+    this.chartData.forEach((item, idx) => {
+      if (index === idx) {
+        if (this.range < -10) {
+          item.isTouchMove = true
+        } else {
+          item.isTouchMove = false
+        }
+      }
+    })
+    this.$apply()
+  }
+  bindchange(e) {
+    let checkArr = e ? e.detail.value : null
+    if (!checkArr) return false
+    let checkArrStr = checkArr.join(',')
+    let checkedLength = 0
+    let chartData = this.chartData
+    let shopTotal = chartData.length || 0
+    let totalPrice = 0
+    let productNo
+    let temp = wx.getStorageSync(STATUS.CART_ISUNCHECKED) || {}
+    for (let item of chartData) {
+      productNo = item.productNo
+      if (checkArrStr.indexOf(productNo) < 0) {
+        // 取消选中
+        item.checked = false
+        temp[item.id] = ''
+      } else {
+        item.checked = true
+        checkedLength++
+        totalPrice = Number(totalPrice) + this.countPrice(item)
+        temp[item.id] = true
+      }
+    }
+    wx.setStorageSync(STATUS.CART_ISUNCHECKED, temp)
+    this.totalPrice = totalPrice.toFixed(2)
+    this.isCheckedAll = shopTotal - this.isLower === checkedLength
+    this.btnEnable = checkedLength > 0
+    this.$apply()
+  }
+  /**
+   * 计算选中的商品价格
+   */
+  countPrice(item) {
+    return Number(item.price || 0) * item.quantity
+  }
+  checkedAll(e) {
+    this.isCheckedAll = !this.isCheckedAll
+    // for (let item of this.chartData) {
+    //   if (!item.isLower) {
+    //     item.checked = false
+    //   }
+    // }
+    if (this.isCheckedAll) {
+      this.btnEnable = true
+      this.totalPrice = 0
+      let temp = wx.getStorageSync(STATUS.CART_ISUNCHECKED) || {}
+      for (let item of this.chartData) {
+        if (!item.isLower) {
+          item.checked = true
+          temp[item.id] = true
+          this.totalPrice += this.countPrice(item)
+        }
+      }
+      this.totalPrice = this.totalPrice.toFixed(2)
+      // this.$apply()
+      wx.setStorageSync(STATUS.CART_ISUNCHECKED, temp)
+    } else {
+      for (let item of this.chartData) {
+        if (!item.isLower) {
+          item.checked = false
+        }
+      }
+      this.btnEnable = false
+      const price = 0
+      this.totalPrice = price.toFixed(2)
+      // this.$apply()
+      wx.setStorageSync(STATUS.CART_ISUNCHECKED, '')
+    }
+    this.$apply()
+  }
+  /**
+   * 去结算
+   */
+  gobuy() {
+    let goodsInfo = []
+    this.chartData.forEach(item => {
+      if (item.checked) {
+        goodsInfo.push({
+          goodsNo: item.goodsNo,
+          currentSelectSpec: item.specifications,
+          counterNum: item.quantity,
+          productNo: item.productNo,
+          price: item.price,
+          coverImage: item.coverImage,
+          cartId: item.id
+        })
+      }
+    })
+    if (goodsInfo.length > 0) {
+      wx.setStorageSync('SHOP-INFO', goodsInfo)
+      wepy.navigateTo({
+        url: 'goods-order'
+      })
+    }
+  }
+  onLoad(options) {}
+  onShow() {
+    let userInfo = wepy.getStorageSync(STATUS.USER_INFO)
+    let userNo = wepy.getStorageSync(STATUS.USER_NO)
+    let giftData = wx.getStorageSync('GIFT_DATA') || ''
+    if (giftData) {
+      wx.removeStorageSync('GIFT_DATA')
+    }
+    if (userInfo && userNo) {
+      this.personalInfo = {
+        thumb: userInfo.avatarUrl,
+        name: userInfo.nickName,
+        id: userNo
+      }
+      this.userNo = userNo
+      this.start = 1
+      this.isLower = 0
+      this.totalPrice = '0.00'
+      this.checkUserMassage()
+      this.queryCart()
+    } else {
+      this.$invoke('user-authorize', 'authorizeActivation')
+    }
+  }
+}
+</script>
+
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow: hidden;
+    .cart-list {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      .list-data {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        .list-text {
+          height: 80rpx;
+          line-height: 80rpx;
+          background: @color-ffffff;
+          font-size: 28rpx;
+          color: @color-999999;
+          padding: 0 30px;
+          flex: 0 0 auto;
+        }
+        .ui-repeart {
+          overflow-y: scroll;
+          -webkit-overflow-scrolling: touch;
+          flex: 1 0 auto;
+          height: 50%;
+          .repeart-item {
+            position: relative;
+            margin-bottom: 20rpx;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            .list {
+              display: flex;
+              align-items: center;
+              transition: all 0.3s;
+              box-sizing: border-box;
+              z-index: 10;
+              background: @color-ffffff;
+              padding: 40rpx 30rpx;
+              position: relative;
+              &.touch-move-active {
+                transform: translateX(-120rpx);
+              }
+              .radio {
+                flex: 0 0 auto;
+                border-radius: 50%;
+                .wx-checkbox-input {
+                  height: 32rpx;
+                  width: 32rpx;
+                  border-radius: 50%;
+                  &.wx-checkbox-input-checked {
+                    background: #c50f0f;
+                    border-color: #c50f0f;
+                    &::before {
+                      color: #fff;
+                      font-size: 30rpx;
+                    }
+                  }
+                }
+              }
+              .info {
+                display: flex;
+                flex: 1 0 auto;
+                width: 50%;
+                &.lower {
+                  opacity: 0.6;
+                }
+                .img {
+                  width: 200rpx;
+                  height: 200rpx;
+                  overflow: hidden;
+                  border-radius: 4rpx;
+                  flex: 0 0 auto;
+                  position: relative;
+                  .ui-img {
+                    width: 100%;
+                    height: 100%;
+                    position: relative;
+                    z-index: 19;
+                  }
+                  .lower-box {
+                    position: absolute;
+                    width: 108rpx;
+                    height: 108rpx;
+                    background: url('https://media.ihunlizhe.com/market/OnlineRetailers/assets/images/lower.png')
+                      no-repeat;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                    z-index: 20;
+                    background-size: 108rpx 108rpx;
+                  }
+                }
+                .text {
+                  flex: 1 0 auto;
+                  width: 50%;
+                  position: relative;
+                  margin-left: 20rpx;
+                  .t-text {
+                    font-size: 24rpx;
+                    color: @color-333333;
+                    line-height: 40rpx;
+                  }
+                  .s-text {
+                    font-size: 20rpx;
+                    color: @color-999999;
+                  }
+                  .num {
+                    position: absolute;
+                    bottom: 0;
+                    font-size: 36rpx;
+                    color: @color-C50F0F;
+                    font-family: 'Bahnschrift';
+                    left: 0;
+                  }
+                  .num-lower {
+                    color: @color-333333;
+                    .text {
+                      margin-left: 20rpx;
+                      font-size: 24rpx;
+                    }
+                  }
+                }
+                .operation {
+                  width: 50rpx;
+                  height: 200rpx;
+                  display: flex;
+                  flex-direction: column;
+                  flex: 0 0 auto;
+                  justify-content: space-between;
+                  position: relative;
+                  .reduce {
+                    width: 50rpx;
+                    height: 50rpx;
+                    text-align: center;
+                    position: relative;
+                    &.disable {
+                      &:hover {
+                        &::before {
+                          background: @color-cccccc;
+                        }
+                      }
+                    }
+                    &:hover {
+                      &::before {
+                        background: @color-222222;
+                      }
+                    }
+                    &::before {
+                      display: block;
+                      height: 2rpx;
+                      width: 24rpx;
+                      background: @color-cccccc;
+                      content: '';
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      transform: translate(-49%, -49%);
+                    }
+                  }
+                  .number {
+                    width: 100rpx;
+                    height: 50rpx;
+                    font-size: 32rpx;
+                    font-weight: bold;
+                    text-align: right;
+                    color: @color-222222;
+                    font-family: 'Bahnschrift';
+                    position: absolute;
+                    top: 50%;
+                    margin-top: -25rpx;
+                    right: 10rpx;
+                    &.disable {
+                      color: @color-cccccc;
+                    }
+                  }
+                  .add {
+                    width: 50rpx;
+                    height: 50rpx;
+                    text-align: center;
+                    position: relative;
+                    &.disable {
+                      &:hover {
+                        &::before {
+                          background: @color-cccccc;
+                        }
+                        &::after {
+                          background: @color-cccccc;
+                        }
+                      }
+                    }
+                    &:hover {
+                      &::before {
+                        background: @color-222222;
+                      }
+                      &::after {
+                        background: @color-222222;
+                      }
+                    }
+                    &::before {
+                      display: block;
+                      height: 2rpx;
+                      width: 24rpx;
+                      content: '';
+                      background: @color-cccccc;
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      transform: translate(-49%, -49%);
+                    }
+                    &::after {
+                      display: block;
+                      width: 2rpx;
+                      height: 24rpx;
+                      background: @color-cccccc;
+                      content: '';
+                      position: absolute;
+                      left: 50%;
+                      top: 50%;
+                      transform: translate(-49%, -49%);
+                    }
+                  }
+                }
+              }
+            }
+            .dedele {
+              flex: 0 0 auto;
+              background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABa0lEQVRIS+2WL0tEURDFfweMBoN2v4BgMBgMu01BwWhQcJPRZBNcg8lPYFLQIFgEBW1uNBhsVoNxwQ1G4cjIXdk/7+3bfRaFvfDKu8M9c8/cM2dEzrI9CZwC68BETtgncA3UJH1kxWgAwDmwCTwDrZy4KWAeuJC0NSrAO/AmaS4vifhv+wWYljQzKoCBhqRqAcADUJGUyYZsX0UGGYdUEjVB0aAVFAVVjYygZgDspoDYj0PjOwNeCw7u3Z4FthNQG6zVdS3bB0AdqErKyigX03YkFnTVJR22A8cAP5T9XYps7wCLkmqdFbYdbeRR0kkSXLkip5cVQuoSnO14MSHE7xdTmqIxQKHQbC+kbnnfU+RloCnp6Vc1GLYflS7yvwVYkdTFedFNbEdN7oB9SUd53XQVuAmPTUYepl64bMdQEMoOD1+TdJsHEIGh0KVkOMOaTphNfH0W2+ejaVw5BjY6nK7oFjF1XAJ7vePLF2NXFTxTsKllAAAAAElFTkSuQmCC')
+                no-repeat center @color-C50F0F;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: @color-ffffff;
+              font-size: 24rpx;
+              width: 120rpx;
+              position: absolute;
+              right: 0;
+              bottom: 0;
+              height: 100%;
+              z-index: 9;
+              background-size: 24rpx 24rpx;
+            }
+          }
+        }
+        .null {
+          height: 98rpx;
+          flex: 0 0 auto;
+        }
+      }
+      .no-data {
+        font-size: 26rpx;
+        color: @color-888888;
+        text-align: center;
+        margin-top: 200rpx;
+        .img-null {
+          width: 412rpx;
+          height: 404rpx;
+          margin: 0 auto 40rpx auto;
+          display: block;
+        }
+      }
+    }
+    .order-operation {
+      position: fixed;
+      bottom: 0;
+      height: 98rpx;
+      border-top: 2rpx solid @color-eeeeee;
+      width: 100%;
+      background: @color-ffffff;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      line-height: 98rpx;
+      .col-l {
+        flex: 0 0 auto;
+        font-size: 24rpx;
+        color: @color-333333;
+        margin-left: 30rpx;
+        display: flex;
+        align-items: center;
+        .radio {
+          flex: 0 0 auto;
+          border-radius: 50%;
+          margin-left: 10rpx;
+          .wx-checkbox-input {
+            height: 32rpx;
+            width: 32rpx;
+            border-radius: 50%;
+            &.wx-checkbox-input-checked {
+              background: #c50f0f;
+              border-color: #c50f0f;
+              &::before {
+                color: #fff;
+                font-size: 30rpx;
+              }
+            }
+          }
+        }
+      }
+      .col-m {
+        flex: 0 0 auto;
+        text-align: center;
+        font-family: 'Bahnschrift';
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        width: 350rpx;
+        overflow: hidden;
+        .ui-text {
+          font-size: 24rpx;
+          color: @color-333333;
+        }
+        .ui-num {
+          font-size: 40rpx;
+          color: @color-333333;
+        }
+      }
+      .col-r {
+        flex: 0 0 auto;
+        width: 240rpx;
+        text-align: center;
+        background: @color-999999;
+        font-size: 30rpx;
+        color: @color-ffffff;
+        &.active {
+          background: @color-C50F0F;
+        }
+      }
+    }
+  }
+}
+</style>

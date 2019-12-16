@@ -1,0 +1,150 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-08-22 16:19:58
+ * @lastTime: 2019-08-27 14:20:35
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view>
+    <view class="address-component" @tap="toAddressList" data-item="{{addressData}}" wx:if="{{!giftData}}">
+      <view wx:if="{{addressData.length>0}}" class="address-block select">
+        <view class="info">
+          <text class="name">{{addressData[0].name}}</text>
+          <text class="phone">{{addressData[0].mobileNo}}</text>
+        </view>
+        <text class="address-info">{{addressData[0].province + addressData[0].city + addressData[0].town + addressData[0].address}}</text>
+      </view>
+      <view wx:else class="address-block no-select">请添加收货人信息</view>
+    </view>
+    <view class="address-component" wx:else @tap="toAddressList">
+      <view class="gift-text">
+        <view class="name">{{giftDataname}}</view>等<text class="ui-color">{{giftData.length}}</text>位收货人
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { GoodsDetailService } from '../../../services'
+import { Tips } from '@/utils'
+export default class AddAddressComponent extends wepy.component {
+  props = {
+    addressData: {
+      type: Array
+    }
+  }
+  data = {
+    addList: {},
+    giftData: null,
+    giftDataname: ''
+  }
+  onLoad() {
+    this.giftData = wx.getStorageSync('GIFT_DATA') || ''
+    if (this.giftData) {
+      this.getGiftAddress()
+    }
+    this.$apply()
+  }
+  /**
+   * 伴手礼收货地址列表查询
+   */
+  getGiftAddress() {
+    GoodsDetailService.shopInvitationGiftQuery({
+      data: {
+        ids: this.giftData
+      }
+    })
+      .then(res => {
+        let result = res.data
+        if (result.success) {
+          let data = result.invitationGiftInfos || []
+          let str = ''
+          for (let item of data) {
+            str += item.realName + ', '
+          }
+          this.giftDataname = str
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  methods = {
+    // 跳转地址列表
+    toAddressList(e) {
+      let addresslist = ''
+      if (!this.giftData) {
+        addresslist = (e.currentTarget.dataset.item[0] || '').receiverNo || ''
+        wepy.navigateTo({ url: 'address-list?data=' + addresslist })
+      } else {
+        wepy.navigateTo({ url: 'address-list' })
+      }
+    }
+  }
+}
+</script>
+<style lang="less">
+@import '../../../assets/less/mixin.less';
+.address-component {
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  background: @color-ffffff;
+  align-items: center;
+  justify-content: space-between;
+  .gift-text {
+    font-size: 28rpx;
+    color: @color-222222;
+    display: flex;
+    font-weight: bold;
+    .name {
+      max-width: 500rpx;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .ui-color {
+      color: @color-FF2E28;
+    }
+  }
+  .address-block {
+    flex: 1 0 auto;
+    width: 50%;
+  }
+  .no-select {
+    font-size: 28rpx;
+    color: @color-888888;
+    font-weight: bold;
+  }
+  .select {
+    line-height: 40rpx;
+    .info {
+      display: block;
+      .name,
+      .phone {
+        font-size: 28rpx;
+        color: @color-222222;
+        font-weight: bold;
+        margin-right: 40rpx;
+      }
+    }
+    .address-info {
+      font-size: 24rpx;
+      color: @color-888888;
+    }
+  }
+  &::after {
+    background: url('@{base64-icon-mapright}') 100% center no-repeat;
+    background-size: auto 30rpx;
+    content: '';
+    display: block;
+    flex: 0 0 auto;
+    height: 50rpx;
+    width: 50rpx;
+  }
+}
+</style>

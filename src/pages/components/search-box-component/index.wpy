@@ -1,0 +1,198 @@
+<!--
+  搜索框组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年5月9日17:56:21
+  @LastUpdateDate: 2019年5月9日18:03:59
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../../assets/less/mixin.less';
+
+@base64-icon-search: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAEJElEQVRIS7WWb4hVRRjGn2fWPNsf++DWBkIsgWBLWaQR1pdKxNqM/hhb4YfC+rBFUi6VZ+ZejaF2z5nDbisWJStW0JeSbcUwlsDcgjINAiu/CNoWoUT/hNTk7N57zxuz3Cu7efZ6N9j5cmBm3vnNPOd9nxlihjY4OHjJqVOnHgBwH8nbAVwPgCIyQfI7AF9lWba7UCgcmGmNvH7mdSZJsjbLsgGSbVPGSyLyO8krAVzh4dWxryuVyrPFYvGHRsDTgNba5iAIBkk+UQ3+SUTeEZHhw4cPHxsaGqr4fmvtoubm5scBbABwHYAJEdHGmK0Xg54Hdnd3X9ra2jpC8i4A/2RZVmhpadne1dVVmmkRa+38IAheIBkBmCcifcaYTfWg54HOuWEAawEc91+t9ZGL7bY2HsfxvQCGSV4GYKPWettMsZPAOI4fI/mhiPwBYIUxZqxRWG2ec85L/IGIpADajTE/5yZNZ2dn07Jly46SXEzy4TAM91hr5wVBsJtkSWv9SKNw59y7ANYDeE9r/VQuMIqi+5VSewF8o7Ve4SclSdIvIi8C2Ke1Xt0osLe39xql1HGS87MsW1QoFP76byydczsBPC0izxlj3u7v728rl8vHAKTlcrl98+bNJxsF+nnOuY8AeFWe1Fq/fwEwjuMjJG8slUqLt2zZ8qNzrgCgV0QSY4yeDayaD8+Q3A7gLa21L5tpjXEcnyF5+djYWLBjx46Sc24PgAcrlcrKYrH4+f8AriK5T0RGjDFr8iQte/m01t49fMZ+QfJOADfNpjSmlMhykt8C2K+1XpUH9D92YZqmC6y1Z51zuwA8KiIdxphPZ3tC51wHgBER2WWM8aUyXVLn3EFfe96gwzA8lCTJBhF5s15q19tEFEUblVLe4vq11i/nAfsAvCQirxljXomi6GqSYySDSqVyW7FY9DdDw805tx/AyizL1hQKhZG8pKlpfiJN0yXW2nNRFG1SSiUictQY094ozTl3A4DvAfydpum1fq0LgNXaGQVwN8m+MAwnzdc59waAP7XWrzYKjOPYm39HTa28uEkvTZLkVhE5BED5ktBae+eZVYuiqFcp5Wv4lzRNl1prT88IrJZDkWSPiJwjuU5r/XEjxKrvvk7y+er8h+rFTruA4zh2JEMRyUhuy7KsN88Pp9TcapIOwC21PhE5oJTqCMPwTN0T1gajKFqvlPL32QIROU1yyL9dlFInSaZZlvlnx3IA67wlVuN+FZFuAF6lpSJyUCl1Tx40903T09PT1tTUFJPs9Df5TNKKyG8AdorIVq+EtfaqIAhG60FzgTWAv25IetnuILkEQOZPLSInSH4yPj4+aq311ni+XQxaF9hI0uTNqQedE6DfRBX6Gcmbp/7TOQN66MDAwEIv+1TonAJzoF/OObAGnZiY8KZ+9l/O2f+GTKJpOwAAAABJRU5ErkJggg==';
+
+.search-box-component {
+  @boxHeight: 72rpx;
+  height: @boxHeight;
+  position: relative;
+
+  &.box-type-working {
+    .search-box-cont {
+      margin-right: 80rpx;
+      .search-box-inp-wrap {
+        display: block;
+      }
+      .search-box-tip {
+        display: none;
+      }
+    }
+    .search-btn-reset {
+      display: inline-block;
+    }
+  }
+
+  .search-btn-reset {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: @boxHeight;
+    line-height: @boxHeight;
+    font-size: 26rpx;
+    color: @brand-primary;
+  }
+
+  .search-box-cont {
+    height: @boxHeight;
+    background: @color-F3F4F5;
+    border-radius: @boxHeight;
+    text-align: left;
+    position: relative;
+    .transition(all 0.2s ease);
+    box-sizing: border-box;
+    padding-left: 20rpx;
+    .search-box-inp-wrap {
+      display: none;
+      position: absolute;
+      top: 0rpx;
+      left: 30rpx;
+      right: 30rpx;
+      height: @boxHeight;
+      padding-left: 40rpx;
+      background: url('@{base64-icon-search}') 0 center no-repeat;
+      background-size: 28rpx 28rpx;
+    }
+
+    .search-box-inp {
+      text-align: left;
+      font-size: 28rpx;
+      color: @color-333333;
+      height: @boxHeight;
+      line-height: @boxHeight;
+    }
+
+    .search-box-tip {
+      position: relative;
+      z-index: 10;
+      top: 0;
+      display: inline-block;
+      height: @boxHeight;
+      line-height: @boxHeight;
+      font-size: 24rpx;
+      color: @color-888888;
+      padding-left: 40rpx;
+      background: url('@{base64-icon-search}') 0 center no-repeat;
+      background-size: 28rpx 28rpx;
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="{{ 'search-box-component' + (' box-type-' + type) }}">
+    <view class="search-box-cont" @tap="onWorkTap">
+      <text class="search-box-tip">{{searchTip}}</text>
+      <view class="search-box-inp-wrap">
+        <input type="text" class="search-box-inp" confirm-type="search" value="{{value}}" focus="{{autoFocus}}" bindconfirm="onSearchConfirm" bindblur="onSearchConfirm" placeholder="{{searchTip}}" placeholder-style="font-size: 24rpx;color: #666;" />
+      </view>
+    </view>
+    <text class="search-btn-reset" @tap="onResetTap">{{searchResetText}}</text>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+
+export default class SearchBoxComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 默认值
+    value: String | Number,
+    // 搜索框提示
+    searchTip: { type: String, default: '搜索您想要的商品' },
+    // 输入框placeholder
+    inputPlaceHolder: { type: String, default: '请输入' },
+    // 搜索框类型（initial.初始状态，默认 working.搜索工作状态）
+    type: { type: String, default: 'initial' },
+    // 搜索取消文本
+    searchResetText: { type: String, default: '取消' },
+    // 自动获取焦点
+    autoFocus: { type: Boolean, default: false },
+    // 失去焦点是否执行搜索操作
+    isBlurSearch: { type: Boolean, default: true },
+    // 搜素框取消事件
+    onSearchReset: Function,
+    // 搜索框搜索事件
+    onSearch: Function,
+    // 去工作状态的搜索框
+    onSearchWork: Function
+  }
+  // 模板(绑定)数据
+  data = {
+    // currentTipText: ''
+  }
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  methods = {
+    /**
+     * 初始状态搜索框点击事件
+     */
+    onWorkTap(e) {
+      if (this.type === 'initial') {
+        let onSearchWork = this.onSearchWork
+        if (onSearchWork) {
+          onSearchWork.call(this.$parent, e)
+        }
+
+        this.$emit('onSearchWork')
+      }
+    },
+    /**
+     * 取消点击事件
+     */
+    onResetTap(e) {
+      let onSearchReset = this.onSearchReset
+      let eventResult
+      if (onSearchReset) {
+        eventResult = onSearchReset.call(this.$parent, e)
+      }
+
+      this.$emit('onSearchReset', res => {
+        eventResult = res
+      })
+
+      if (eventResult !== false) {
+        wx.navigateBack({ delta: 1 })
+      }
+    },
+    /**
+     * 搜索事件
+     */
+    onSearchConfirm(e) {
+      let type = e.type
+      if (!this.isBlurSearch && type === 'blur') {
+        return false
+      }
+      let that = this
+      setTimeout(() => {
+        let onSearch = that.onSearch
+        if (onSearch) {
+          onSearch.call(that.$parent, e)
+        }
+
+        that.$emit('onSearch')
+      }, 380)
+    }
+  }
+
+  onLoad() {
+    // let status = this.status
+    // this.currentTipText = status === 'initial' ? this.searchTip : (status === 'working' ? this.inputPlaceHolder : '')
+  }
+}
+</script>

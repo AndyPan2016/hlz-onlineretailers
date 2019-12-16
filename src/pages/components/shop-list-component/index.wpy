@@ -1,0 +1,207 @@
+<template>
+  <view class="shop-box">
+    <view class="layer" @tap="goShop" data-item="{{shopData}}" wx:if="{{shopData.fromOrderDetail}}"></view>
+    <view wx:if="{{!shopData.coverImg && !shopData.coverImage}}" class="col-l">
+      这里有张图片
+    </view>
+    <image wx:else class="col-l" src="{{shopData.coverImg || shopData.coverImage}}"></image>
+    <view class="col-r">
+      <view class="introduce">{{shopData.goodsCaption}}</view>
+      <view class="describe">
+        <!-- {{shopData.minOrderNum}} -->
+        {{shopData.des}}
+      </view>
+
+      <block wx:if="{{!orderDetail}}">
+        <text class="amount">x {{shopData.counterNum || shopData.num}}</text>
+        <text class="price">￥{{shopData.price}}</text>
+      </block>
+      <block wx:else>
+        <view class="order">
+          <view class="order-l">
+            <text class="order-price">￥{{shopData.price}}</text>
+            <text class="order-amount">x {{shopData.counterNum || shopData.num}}</text>
+          </view>
+          <view class="buy" @tap="addCart" data-item="{{shopData}}" wx:if="{{orderStatus==='COMPLETED' || orderStatus==='CLOSED' || orderStatus==='CANCELED'}}">再次购买</view>
+        </view>
+      </block>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { ShopCartService } from '../../../services'
+import { Tips } from '@/utils'
+export default class ShopListComponent extends wepy.component {
+  props = {
+    shopData: {
+      type: Object
+    },
+    orderDetail: {
+      type: Boolean,
+      default: false
+    },
+    orderStatus: {
+      type: String,
+      default: ''
+    }
+  }
+  computed = {}
+  /**
+   * 添加购物车
+   */
+  addShopCart(parme) {
+    let parmes = { ...parme }
+    ShopCartService.shopCartAdd({
+      data: parmes
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          Tips.success('成功，在购物车等您哟~')
+          setTimeout(() => {
+            wx.switchTab({ url: './cart' })
+          }, 1000)
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+  methods = {
+    addCart(e) {
+      let data = e.currentTarget.dataset.item
+      this.addShopCart({
+        userNo: data.userNo,
+        productList: [
+          {
+            num: data.minOrderNum,
+            productNo: data.productNo
+          }
+        ]
+      })
+    },
+    goShop(e) {
+      let dataset = e.currentTarget.dataset || {}
+      let productInfo = dataset.item || {}
+      if (productInfo) {
+        let goodsNo = productInfo.goodsNo
+        wepy.navigateTo({ url: 'goods-detail?id=' + goodsNo })
+      }
+    }
+  }
+}
+</script>
+
+
+<style lang="less">
+@import '../../../assets/less/mixin.less';
+.shop-box {
+  display: flex;
+  padding: 40rpx 30rpx;
+  background: @color-ffffff;
+  position: relative;
+  .layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    z-index: 10;
+  }
+  .col-l {
+    width: 180rpx;
+    height: 180rpx;
+    line-height: 180rpx;
+    flex: 0 0 auto;
+    margin-right: 20rpx;
+    color: @color-ffffff;
+    font-size: 24rpx;
+    text-align: center;
+    background: @color-666666;
+  }
+  .col-r {
+    flex: 1 0 auto;
+    width: 50%;
+    position: relative;
+    height: 180rpx;
+    display: flex;
+    flex-direction: column;
+    .introduce {
+      font-size: 26rpx;
+      color: @color-333333;
+      line-height: 40rpx;
+      flex: 0 0 auto;
+      display: block;
+    }
+    .describe {
+      font-size: 20rpx;
+      color: @color-888888;
+      flex: 0 0 auto;
+      display: block;
+      padding-top: 20rpx;
+      .des-text {
+        display: inline-block;
+        margin-right: 5rpx;
+      }
+    }
+    .order {
+      display: flex;
+      align-items: center;
+      padding-top: 20rpx;
+      .order-l {
+        flex: 1 0 auto;
+        width: 50%;
+        display: flex;
+        align-items: center;
+      }
+      .buy {
+        width: 148rpx;
+        height: 48rpx;
+        background: @color-C50F0F;
+        border-radius: 4rpx;
+        font-size: 26rpx;
+        color: @color-ffffff;
+        text-align: center;
+        line-height: 48rpx;
+        position: relative;
+        z-index: 100;
+      }
+      .order-price {
+        color: @color-C50F0F;
+        font-weight: bold;
+        font-family: 'Bahnschrift';
+        font-size: 30rpx;
+      }
+      .order-amount {
+        font-size: 22rpx;
+        font-family: 'Bahnschrift';
+        color: @color-222222;
+        flex: 0 0 auto;
+        padding-bottom: 0rpx;
+        display: block;
+        margin-left: 20rpx;
+      }
+    }
+    .amount {
+      font-size: 20rpx;
+      color: @color-222222;
+      flex: 0 0 auto;
+      padding-bottom: 0rpx;
+      display: block;
+    }
+    .price {
+      position: absolute;
+      right: 0rpx;
+      bottom: -8rpx;
+      // color: @brand-primary;
+      font-weight: bold;
+      font-family: 'Bahnschrift';
+      font-size: 30rpx;
+    }
+  }
+}
+</style>

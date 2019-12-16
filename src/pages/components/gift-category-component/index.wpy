@@ -1,0 +1,109 @@
+<!--
+ * @Description: 伴手礼类别
+ * @Author: huyanhai
+ * @since: 2019-08-12 13:54:40
+ * @lastTime: 2019-09-05 11:29:46
+ -->
+<template>
+  <view class="category-box">
+    <repeat for="{{dataset}}" key="index" index="index" item="item">
+      <view class="ui-repeart-item" style="{{item.coverImg ? ('background-image:url('+item.coverImg+')') : ''}}" @tap="toTheme" data-item="{{item}}">
+        <view class="layer">
+          <view class="ui-name">{{item.themeName}}</view>
+          <view class="ui-text">{{item.describes}}</view>
+          <view class="icons">{{item.keyword}}</view>
+        </view>
+      </view>
+    </repeat>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class GiftCategoryComponent extends wepy.component {
+  props = {
+    dataSet: Array
+  }
+  methods = {
+    toTheme(e) {
+      let themeNo = e.currentTarget.dataset.item.themeNo
+      let themeBg = e.currentTarget.dataset.item.bgImg
+      let themeName = e.currentTarget.dataset.item.themeName
+      wx.navigateTo({
+        url:
+          'theme-list?themeNo=' +
+          themeNo +
+          '&themeBg=' +
+          themeBg +
+          '&themeName=' +
+          themeName
+      })
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+@import '../../../assets/less/mixin.less';
+.category-box {
+  width: 100%;
+  overflow: hidden;
+  .ui-repeart-item {
+    width: calc(50% - 10rpx);
+    height: 180rpx;
+    background: gray;
+    border-radius: 10rpx;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 20rpx 0 0 30rpx;
+    float: left;
+    background-size: cover;
+    &:nth-child(2n) {
+      margin-left: 10rpx;
+    }
+    &:nth-child(2n-1) {
+      margin-right: 10rpx;
+    }
+    margin-bottom: 20rpx;
+    position: relative;
+    .layer {
+      position: absolute;
+      width: 250rpx;
+      height: 132rpx;
+      background: rgba(255, 255, 255, 0.8);
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 4rpx;
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
+  .ui-text {
+    color: @color-333333;
+    font-size: 20rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 7rpx 0;
+    height: 24rpx;
+    line-height: 24rpx;
+  }
+  .ui-name {
+    color: @color-333333;
+    font-size: 30rpx;
+    height: 30rpx;
+    line-height: 30rpx;
+    font-weight: bold;
+  }
+  .icons {
+    font-size: 20rpx;
+    color: #e90000;
+    padding: 0 10rpx;
+    border-radius: 4rpx;
+    border: 1px solid #e90000;
+    height: 28rpx;
+    line-height: 28rpx;
+  }
+}
+</style>

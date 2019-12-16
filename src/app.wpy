@@ -1,0 +1,139 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-08-12 16:14:38
+ * @lastTime: 2019-10-12 11:30:27
+ * @如果有bug，那肯定不是我的锅
+ -->
+<style lang="less">
+@import './assets/less/commons.less';
+
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+page {
+  background: #fafafa;
+}
+</style>
+
+<script>
+import wepy from 'wepy'
+import 'wepy-async-function'
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      // 首页
+      'pages/index',
+      // 商品搜索
+      'pages/goods-search',
+      // 商品详情
+      'pages/goods-detail',
+      // 填写订单
+      'pages/goods-order',
+      // 收货地址
+      'pages/address-list',
+      // 新增收货地址
+      'pages/address-add',
+      // 选择区域
+      'pages/address-city',
+      // 我的订单
+      'pages/my-order',
+      // 订单详情
+      'pages/order-detail',
+      // 物流
+      'pages/logistics',
+      // 订单跟踪
+      'pages/order_track',
+      'pages/theme-list',
+      'pages/my',
+      'pages/browsing-history',
+      'pages/help',
+      'pages/help-detail',
+      'pages/message-center',
+      'pages/notice-list',
+      'pages/notice-detail',
+      'pages/out-links',
+      'pages/cart',
+      'pages/carts'
+    ],
+    tabBar: {
+      color: '#888888',
+      selectedColor: '#C50F0F',
+      borderStyle: 'black',
+      backgroundColor: '#ffffff',
+      list: [
+        {
+          text: '首页',
+          iconPath: './assets/images/shop-home-normal.png',
+          selectedIconPath: './assets/images/shop-home-active.png',
+          pagePath: 'pages/index'
+        },
+        {
+          text: '购物车',
+          iconPath: './assets/images/shop-cart-normal.png',
+          selectedIconPath: './assets/images/shop-cart-active.png',
+          pagePath: 'pages/cart'
+        },
+        {
+          text: '订单',
+          iconPath: './assets/images/shop-order-normal.png',
+          selectedIconPath: './assets/images/shop-order-active.png',
+          pagePath: 'pages/my-order'
+        },
+        {
+          text: '我的',
+          iconPath: './assets/images/shop-my-normal.png',
+          selectedIconPath: './assets/images/shop-my-active.png',
+          pagePath: 'pages/my'
+        }
+      ]
+    },
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#fff',
+      navigationBarTitleText: '昏礼者',
+      navigationBarTextStyle: 'black'
+      // navigationStyle: 'custom'
+    },
+    permission: {
+      'scope.userLocation': {
+        desc: '你的位置信息将用于小程序位置接口使用'
+      }
+    },
+    navigateToMiniProgramAppIdList: ['wxb3b29916859d5120']
+  }
+
+  globalData = {
+    userInfo: null,
+    iphoneX: false
+  }
+
+  constructor() {
+    super()
+    this.use('requestfix')
+    this.use('promisify')
+  }
+
+  onLaunch() {
+  }
+
+  getUserInfo(cb) {
+    const that = this
+    if (this.globalData.userInfo) {
+      return this.globalData.userInfo
+    }
+    wepy.getUserInfo({
+      success(res) {
+        that.globalData.userInfo = res.userInfo
+        cb && cb(res.userInfo)
+      }
+    })
+  }
+}
+</script>

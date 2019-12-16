@@ -1,0 +1,181 @@
+<!--
+ * @Description: 计数器
+ * @Author: huyanhai
+ * @since: 2019-05-17 09:54:07
+ * @lastTime: 2019-10-17 17:19:00
+ -->
+
+<template>
+  <view class="counter">
+    <text class="reduce" :class="{disable:disable}" @tap="reduce"></text>
+    <input class="number" :class="{disable:disable}" value="{{counterNum}}" type="number" bindinput="inputNumber" bindblur="blurNumber" disabled="{{disable}}" />
+    <text class="add" :class="{disable:disable}" @tap="add"></text>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+export default class AmountComponent extends wepy.component {
+  props = {
+    counterNum: {
+      type: Number
+    },
+    minNum: {
+      type: Number
+    },
+    disable: {
+      type: Boolean,
+      default: false
+    },
+    onReduce: {
+      type: Function
+    },
+    onAdd: {
+      type: Function
+    },
+    onInput: {
+      type: Function
+    },
+    onblur: {
+      Function
+    }
+  }
+  methods = {
+    reduce(e) {
+      if (!this.disable && this.minNum < this.counterNum) {
+        let numbers = this.counterNum
+        if (numbers > 1) {
+          this.counterNum--
+        }
+        if (this.onReduce) {
+          this.onReduce.call(this.$parent, this.counterNum, e)
+        }
+        this.$emit('onReduce', this.counterNum)
+      }
+    },
+    add(e) {
+      if (!this.disable) {
+        let numbers = this.counterNum
+        if (numbers < 9999) {
+          this.counterNum++
+        }
+
+        if (this.onAdd) {
+          this.onAdd.call(this.$parent, this.counterNum, e)
+        }
+        this.$emit('onAdd', this.counterNum)
+      }
+    },
+    // 手动输入
+    inputNumber(e) {
+      let counterNum = e.detail.value
+      this.counterNum = counterNum
+      if (this.onInput) {
+        this.onInput.call(this.$parent, this.counterNum, e)
+      }
+      this.$emit('onInput', this.counterNum)
+    },
+    // 失去焦点
+    blurNumber(e) {
+      let counterNum = e.detail.value || 1
+      this.counterNum = counterNum
+      if (this.onblur) {
+        this.onblur.call(this.$parent, this.counterNum, e)
+      }
+      this.$emit('onblur', this.counterNum)
+    }
+  }
+}
+</script>
+<style lang="less">
+@import '../../../assets/less/mixin.less';
+.counter {
+  display: flex;
+  .reduce {
+    width: 50rpx;
+    height: 50rpx;
+    text-align: center;
+    position: relative;
+    &.disable {
+      &:hover {
+        &::before {
+          background: @color-cccccc;
+        }
+      }
+    }
+    &:hover {
+      &::before {
+        background: @color-222222;
+      }
+    }
+    &::before {
+      display: block;
+      height: 2rpx;
+      width: 24rpx;
+      background: @color-cccccc;
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-49%, -49%);
+    }
+  }
+  .number {
+    width: 100rpx;
+    height: 50rpx;
+    font-size: 36rpx;
+    font-weight: bold;
+    text-align: center;
+    color: @color-222222;
+    font-family: 'Bahnschrift';
+    &.disable {
+      color: @color-cccccc;
+    }
+  }
+  .add {
+    width: 50rpx;
+    height: 50rpx;
+    text-align: center;
+    position: relative;
+    &.disable {
+      &:hover {
+        &::before {
+          background: @color-cccccc;
+        }
+        &::after {
+          background: @color-cccccc;
+        }
+      }
+    }
+    &:hover {
+      &::before {
+        background: @color-222222;
+      }
+      &::after {
+        background: @color-222222;
+      }
+    }
+    &::before {
+      display: block;
+      height: 2rpx;
+      width: 24rpx;
+      content: '';
+      background: @color-cccccc;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-49%, -49%);
+    }
+    &::after {
+      display: block;
+      width: 2rpx;
+      height: 24rpx;
+      background: @color-cccccc;
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-49%, -49%);
+    }
+  }
+}
+</style>

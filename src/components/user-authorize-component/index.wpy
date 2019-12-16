@@ -1,0 +1,781 @@
+<!--
+  用户授权组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年4月29日18:32:19
+  @LastUpdateDate: 2019年4月29日18:32:46
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+@import '../../assets/less/mixin.less';
+
+.user-authorize-component {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+
+  &.open {
+    z-index: 99999;
+  }
+
+  .authorize-tip-wrap {
+    margin: 50rpx auto 150rpx auto;
+
+    .logo {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 50rpx;
+
+      .logo-thumb {
+        display: inline-block;
+        width: 120rpx;
+        height: 120rpx;
+        .border-radius(50%);
+        border: 4px solid #fff;
+        .box-shadow(0 0 20px rgba(124, 124, 124, 0.5));
+      }
+      .icon-logo-thumb {
+        display: inline-block;
+        width: 120rpx;
+        height: 120rpx;
+        .border-radius(50%);
+        border: 4px solid #fff;
+        .box-shadow(0 0 20px rgba(124, 124, 124, 0.5));
+        background: url('data:image/jpeg;base64,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');
+        background-size: 100% 100%;
+      }
+    }
+    .reminder-title {
+      text-align: left;
+      display: inline-block;
+      width: 100%;
+      font-size: 28rpx;
+      line-height: 40rpx;
+    }
+    .reminder-cont {
+      margin-top: 30rpx;
+      text-align: left;
+      display: inline-block;
+      width: 100%;
+      font-size: 28rpx;
+      line-height: 40rpx;
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="{{ 'user-authorize-component' + (' ' + class) + (authorizeStatus ? ' ' + authorizeStatus : '') }}">
+    <popup type="downup" :onCloseByUser="onCloseFn" title="授权提醒">
+      <view slot="popup-body-cont" class="popup-body-cont">
+        <view class="authorize-tip-wrap">
+          <view class="logo">
+            <image class="logo-thumb" wx:if="{{logo}}" src="{{logo}}" />
+            <i class="icon-logo-thumb" wx:else></i>
+          </view>
+          <text class="reminder-title">申请以下权限：</text>
+          <text class="reminder-cont">将获取你的信息-{{authorizeInfoTip}}</text>
+        </view>
+        <button wx:if="{{canIUseUserInfo && authorizeCurrType == 'UserInfo'}}" type="primary" open-type="getUserInfo" bindgetuserinfo="getUserInfo">授权</button>
+        <button wx:elif="{{canIUsePhoneNumber && authorizeCurrType == 'PhoneNumber'}}" type="primary" open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber">授权</button>
+        <view wx:else class="can-not-use">请升级微信版本</view>
+      </view>
+    </popup>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+import PopupComponent from '@/components/popup-component/index'
+import { STATUS, RESOURCE_PATCH } from '@/configs'
+import { WXBizDataCrypt, Tips } from '@/utils'
+import { CommonsService } from '@/services'
+// import RdWXBizDataCrypt from '@/utils/cryptojs'
+
+export default class UserAuthorizeComponent extends wepy.component {
+  // 接收外部传入的参数
+  props = {
+    // 自定义class
+    class: { type: String },
+    // 授权logo
+    logo: { type: String, default: '' },
+    // 授权类型
+    authorizeType: {
+      type: Array | String,
+      default: ['WXLogin', 'AccountInfo', 'UserInfo', 'PhoneNumber']
+    },
+    // 自动激活验证
+    isAutoActivation: String,
+    // 授权成功事件
+    onAuthorize: { type: Function },
+    // 授权失败事件
+    onAuthorizeError: { type: Function },
+    // 所有授权完成事件
+    onAuthorizeAll: { type: Function },
+    // 关闭授权
+    onCloseAuthorize: Function
+  }
+  // 模板(绑定)数据
+  data = {
+    resourcePath: RESOURCE_PATCH,
+    // 授权状态(open|close)
+    authorizeStatus: null,
+    // 用户授权类型集合
+    authorizeTypeObjs: {
+      // 微信登录
+      WXLogin: { text: '微信登录' },
+      // 账号信息
+      AccountInfo: { text: '账号信息（包括：APPID）' },
+      // 用户信息
+      UserInfo: { text: '用户信息（包括：头像、昵称等）' },
+      // 系统信息
+      SystemInfo: { text: '系统信息' },
+      // 手机号(需要在获取之前通过后端获取session_key，并设置session_key保存到Storage)
+      PhoneNumber: { text: '手机号' },
+      // 获取收货地址
+      ChooseAddress: { text: '收货地址' },
+      // 获取当前地理位置
+      Location: { text: '地理位置' },
+      // 打开获取到的地理位置(与Location组合使用)
+      OpenLocation: { text: '打开位置地图' }
+    },
+    // 是否支持
+    canIUseUserInfo: wx.canIUse('button.open-type.getUserInfo'),
+    canIUsePhoneNumber: wx.canIUse('button.open-type.getPhoneNumber'),
+    // 用户信息
+    userInfo: null,
+    // 微信登录Code
+    wxCode: null,
+    // 微信登录账号信息
+    accountInfo: null,
+    // 系统信息
+    systemInfo: null,
+    // 手机号
+    phoneNumber: null,
+    // 收货地址
+    chooseAddress: null,
+    // 地理位置
+    locations: null,
+    // 当前授权index
+    authorizeIndex: 0,
+    // 当前授权的Type（用于显示不同类型的授权按钮）
+    authorizeCurrType: '',
+    // 当前所有授权数据集合
+    allAuthorizeData: null,
+    // 授权信息提醒
+    authorizeInfoTip: '',
+    // 防止重复激活授权线程
+    preventRepeatThread: null
+  }
+
+  components = {
+    popup: PopupComponent
+  }
+  // 用于监听组件之间的通信与交互事件的事件处理函数集合
+  events = {}
+
+  onCloseFn() {
+    let that = this
+    this.responseCustomEvent('onCloseAuthorize')
+    setTimeout(() => {
+      that.authorizeStatus = 'close'
+      that.authorizeIndex = 0
+      that.$apply()
+    }, 0)
+  }
+
+  methods = {
+    /**
+     * 激活授权
+     */
+    authorizeActivation() {
+      let that = this
+      clearTimeout(this.preventRepeatThread)
+      this.preventRepeatThread = setTimeout(() => {
+        let authorizeType = that.authorizeType
+        if (typeof authorizeType === 'string') {
+          that.authorizeType = authorizeType.split('|')
+          that.$apply()
+        }
+        that.authorizeFn()
+      }, 780)
+    },
+    /**
+     * 获取用户信息授权
+     */
+    getUserInfo(e) {
+      if (e.detail.errMsg !== 'getUserInfo:ok') {
+        // 获取失败（用户拒绝）
+        this.responseCustomEvent('onAuthorizeError', {
+          key: 'UserInfo',
+          result: e
+        })
+        return false
+      }
+
+      // 保存IV
+      wepy.setStorageSync(STATUS.ENCRYPT_IV, e.detail.iv)
+      let userInfo = e.detail.userInfo
+      this.userInfo = userInfo
+      this.closeAuthorize()
+      if (userInfo) {
+        // 获取userNo
+        this.shopWechatAuthVerify(userInfo, e.detail)
+      }
+    },
+    /**
+     * 获取手机号码
+     */
+    getPhoneNumber(e) {
+      if (e.detail.errMsg !== 'getPhoneNumber:ok') {
+        // 失败（用户拒绝）
+        this.responseCustomEvent('onAuthorizeError', {
+          key: 'PhoneNumber',
+          result: e
+        })
+        // this.authorizeIndex = 0
+        return false
+      }
+      let sessionKey = wepy.getStorageSync(STATUS.SESSION_KEY)
+      if (sessionKey) {
+        let encryptedData = e.detail.encryptedData
+        let phoneNumber = this.decryptPhoneNumber(encryptedData)
+        this.closeAuthorize()
+        if (phoneNumber) {
+          // 保存并缓存数据
+          this.saveAndCacheInfo(phoneNumber, 'phoneNumber', STATUS.PHONE_NUMBER)
+          // 响应事件
+          this.responseCustomEvent('onAuthorize', {
+            key: 'PhoneNumber',
+            result: phoneNumber
+          })
+          this.bindMobile(phoneNumber)
+          return false
+        }
+      }
+      let userInfo = this.userInfo || wx.getStorageSync(STATUS.USER_INFO) || {}
+      // 微信认证
+      CommonsService.shopWechatAuthVerify({
+        data: {
+          // 小程序登录凭证
+          jsCode: this.wxCode,
+          // 性别
+          gender: userInfo.gender || '1',
+          // 用户头像
+          avatarUrl: userInfo.avatarUrl,
+          // 用户昵称
+          nickName: userInfo.nickName
+        }
+      })
+        .then(res => {
+          let data = res.data
+          wepy.setStorageSync(STATUS.SESSION_KEY, data.sessionKey)
+          let encryptedData = e.detail.encryptedData
+          let phoneNumber = this.decryptPhoneNumber(encryptedData)
+          this.closeAuthorize()
+          if (phoneNumber) {
+            // 保存并缓存数据
+            this.saveAndCacheInfo(
+              phoneNumber,
+              'phoneNumber',
+              STATUS.PHONE_NUMBER
+            )
+            this.saveAndCacheInfo(data.userNo, 'userNo', STATUS.USER_NO)
+            // 响应事件
+            this.responseCustomEvent('onAuthorize', {
+              key: 'PhoneNumber',
+              result: phoneNumber
+            })
+
+            this.bindMobile(phoneNumber)
+            // 递增已授权索引
+            // this.authorizeIndexCount()
+          }
+        })
+        .catch(err => {
+          Tips.error(err.message)
+        })
+    }
+  }
+
+  bindMobile(phoneNumber) {
+    let userNo = wx.getStorageSync(STATUS.USER_NO)
+    // 绑定手机号
+    CommonsService.shopWechatBindingMobile({
+      data: {
+        mobileNo: phoneNumber,
+        userNo: userNo
+      }
+    })
+      .then(res => {
+        // 递增已授权索引
+        this.authorizeIndexCount()
+      })
+      .catch(err => {
+        Tips.error(err)
+      })
+  }
+
+  shopWechatAuthVerify(userInfo, resultInfo) {
+    userInfo =
+      userInfo || this.userInfo || wx.getStorageSync(STATUS.USER_INFO) || {}
+    // 微信认证
+    CommonsService.shopWechatAuthVerify({
+      data: {
+        // 小程序登录凭证
+        jsCode: this.wxCode,
+        // 性别
+        gender: userInfo.gender || '1',
+        // 用户头像
+        avatarUrl: userInfo.avatarUrl,
+        // 用户昵称
+        nickName: userInfo.nickName
+      }
+    })
+      .then(res => {
+        let data = res.data
+        wepy.setStorageSync(STATUS.OPEN_ID, data.openId)
+        wepy.setStorageSync(STATUS.SESSION_KEY, data.sessionKey)
+        // 保存并缓存数据
+        this.saveAndCacheInfo(data.userNo, 'userNo', STATUS.USER_NO)
+        // 保存并缓存用户信息
+        this.saveAndCacheInfo(userInfo, 'userInfo', STATUS.USER_INFO)
+        // 响应事件
+        this.responseCustomEvent('onAuthorize', {
+          key: 'UserInfo',
+          result: userInfo
+        })
+        // 递增已授权索引
+        this.authorizeIndexCount()
+
+        if (resultInfo) {
+          let resData = WXBizDataCrypt.decryptData({
+            encryptedData: resultInfo.encryptedData,
+            iv: resultInfo.iv,
+            sessionKey: data.sessionKey,
+            appId: 'wxb3b29916859d5120'
+          })
+          if (resData.unionId) {
+            this.saveAndCacheInfo(resData.unionId, 'unionId', STATUS.UNIONID)
+          }
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  authorizeTypeFn = {
+    /**
+     * 获取微信登录后的微信Code
+     */
+    WXLogin() {
+      let that = this
+      // let wxCode = wx.getStorageSync(STATUS.WX_CODE)
+      // if (wxCode) {
+      //   // 保存并缓存数据
+      //   that.saveAndCacheInfo(wxCode, 'wxCode', STATUS.WX_CODE)
+      //   // 递增已授权索引
+      //   that.authorizeIndexCount()
+      //   return false
+      // }
+      wx.login({
+        success(res) {
+          if (res.code) {
+            // 保存并缓存数据
+            that.saveAndCacheInfo(res.code, 'wxCode', STATUS.WX_CODE)
+            // 响应事件
+            that.responseCustomEvent('onAuthorize', {
+              key: 'WXLogin',
+              result: res
+            })
+            // 递增已授权索引
+            that.authorizeIndexCount()
+          } else {
+            that.responseCustomEvent('onAuthorizeError', {
+              key: 'WXLogin',
+              result: res
+            })
+          }
+        },
+        fail(res) {
+          that.responseCustomEvent('onAuthorizeError', {
+            key: 'WXLogin',
+            result: res
+          })
+        }
+      })
+    },
+    /**
+     * 获取用户信息
+     */
+    UserInfo() {
+      // this.openAuthorize()
+      let that = this
+      that.isAuthorize(status => {
+        if (!status) {
+          // 打开授权引导
+          that.openAuthorize()
+        }
+      })
+    },
+    /**
+     * 获取微信账号信息
+     */
+    AccountInfo() {
+      let accountInfo = wx.getAccountInfoSync()
+      if (accountInfo) {
+        // 保存并缓存数据
+        this.saveAndCacheInfo(accountInfo, 'accountInfo', STATUS.ACCOUNT_INFO)
+        // 响应事件
+        this.responseCustomEvent('onAuthorize', {
+          key: 'AccountInfo',
+          result: accountInfo
+        })
+        // 递增已授权索引
+        this.authorizeIndexCount()
+      } else {
+        this.responseCustomEvent('onAuthorizeError', {
+          key: 'AccountInfo',
+          result: null
+        })
+      }
+    },
+    /**
+     * 获取系统信息
+     */
+    SystemInfo() {
+      let that = this
+      wx.getSystemInfo({
+        success(res) {
+          // 保存并缓存数据
+          that.saveAndCacheInfo(res, 'systemInfo', STATUS.SYSTEM_INFO)
+          // 响应事件
+          that.responseCustomEvent('onAuthorize', {
+            key: 'SystemInfo',
+            result: res
+          })
+          // 递增已授权索引
+          that.authorizeIndexCount()
+        },
+        fail(res) {
+          that.responseCustomEvent('onAuthorizeError', {
+            key: 'SystemInfo',
+            result: res
+          })
+        }
+      })
+    },
+    /**
+     * 授权获取手机号
+     */
+    PhoneNumber() {
+      let userNo = wx.getStorageSync(STATUS.USER_NO)
+      // 判断用户是否已经绑定过手机号
+      CommonsService.memberQuery({
+        data: { userNo, clientType: 'SHOP_C_MINI' }
+      })
+        .then(res => {
+          let memberInfo = res.data
+          let phoneNumber = memberInfo.mobileNo
+          if (phoneNumber) {
+            // 保存并缓存数据
+            this.saveAndCacheInfo(
+              phoneNumber,
+              'phoneNumber',
+              STATUS.PHONE_NUMBER
+            )
+            // 响应事件
+            this.responseCustomEvent('onAuthorize', {
+              key: 'PhoneNumber',
+              result: phoneNumber
+            })
+            // 递增已授权索引
+            this.authorizeIndexCount()
+          } else {
+            // 打开授权引导
+            this.openAuthorize()
+          }
+        })
+        .catch(err => {
+          Tips.error(err)
+        })
+    },
+    /**
+     * 获取收货地址
+     */
+    ChooseAddress() {
+      let that = this
+      wx.chooseAddress({
+        success(res) {
+          // 保存并缓存数据
+          that.saveAndCacheInfo(res, 'chooseAddress', STATUS.CHOOSE_ADDRESS)
+          // 响应事件
+          that.responseCustomEvent('onAuthorize', {
+            key: 'ChooseAddress',
+            result: res
+          })
+          // 递增已授权索引
+          that.authorizeIndexCount()
+        },
+        fail(res) {
+          that.responseCustomEvent('onAuthorizeError', {
+            key: 'ChooseAddress',
+            result: res
+          })
+        }
+      })
+    },
+    /**
+     * 获取当前地理位置
+     */
+    Location() {
+      let that = this
+      wx.getLocation({
+        type: 'gcj02',
+        success(res) {
+          // 保存并缓存数据
+          that.saveAndCacheInfo(res, 'locations', STATUS.LOCATION)
+          // 响应事件
+          that.responseCustomEvent('onAuthorize', {
+            key: 'Location',
+            result: res
+          })
+          // 递增已授权索引
+          that.authorizeIndexCount()
+        },
+        fail(res) {
+          that.responseCustomEvent('onAuthorizeError', {
+            key: 'Location',
+            result: res
+          })
+        }
+      })
+    },
+    /**
+     * 打开位置地图
+     */
+    OpenLocation() {
+      let location = wepy.getStorageSync(STATUS.LOCATION)
+      if (location) {
+        wx.openLocation({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          scale: 18
+        })
+      }
+    }
+  }
+
+  /**
+   * 依次执行每一个授权操作
+   */
+  authorizeFn() {
+    // if (this.authorizeIndex > this.authorizeType.length - 1) {
+    //   this.authorizeIndex = 0
+    // }
+    let authorizeType = this.authorizeType[this.authorizeIndex]
+    // 获取当前授权相关配置
+    let authorizeTypeObj = this.authorizeTypeObjs[authorizeType]
+    if (authorizeTypeObj) {
+      this.authorizeInfoTip = authorizeTypeObj.text
+      this.authorizeCurrType = authorizeType
+      this.$apply()
+    }
+    // 授权操作函数
+    let authorizeItem = this.authorizeTypeFn[authorizeType]
+    if (authorizeItem) {
+      authorizeItem.call(this)
+    }
+  }
+
+  /**
+   * 递增已授权索引
+   */
+  authorizeIndexCount() {
+    // if (this.authorizeIndex > this.authorizeType.length - 1) {
+    //   this.authorizeIndex = 0
+    // }
+    this.authorizeIndex++
+    this.$apply()
+    if (this.authorizeIndex < this.authorizeType.length) {
+      // 继续执行下一项授权
+      this.authorizeFn()
+    } else if (this.authorizeIndex === this.authorizeType.length) {
+      // 所有授权完成
+      this.responseCustomEvent('onAuthorizeAll', this.allAuthorizeData)
+    }
+  }
+
+  /**
+   * 打开授权引导
+   */
+  openAuthorize() {
+    let that = this
+    setTimeout(() => {
+      that.authorizeStatus = 'open'
+      that.$apply()
+      that.$invoke('popup', 'open')
+    }, 400)
+  }
+
+  /**
+   * 关闭授权引导
+   */
+  closeAuthorize() {
+    this.$invoke('popup', 'close')
+    let that = this
+    setTimeout(() => {
+      that.authorizeStatus = ''
+      that.$apply()
+    }, 400)
+  }
+
+  /**
+   * 解密手机号
+   */
+  decryptPhoneNumber(encryptedData) {
+    let sessionKey = wepy.getStorageSync(STATUS.SESSION_KEY)
+    if (!sessionKey) {
+      wx.showToast({
+        title: 'session_key无效',
+        icon: 'none',
+        duration: 1500,
+        mask: true
+      })
+      return false
+    }
+    let iv = wepy.getStorageSync(STATUS.ENCRYPT_IV)
+    let phoneNumber = WXBizDataCrypt.wechatDecrypt(
+      encryptedData,
+      sessionKey,
+      iv
+    )
+    return phoneNumber
+  }
+
+  /**
+   * 响应自定义事件
+   */
+  responseCustomEvent(name, params) {
+    if (name) {
+      let eventObj = this[name]
+      if (eventObj) {
+        eventObj.call(this.$parent, params)
+      }
+      this.$emit(name, params)
+    }
+  }
+
+  /**
+   * 保存并缓存微信Code
+   */
+  saveAndCacheInfo(info, key, statusKey) {
+    if (info) {
+      // 保存当前授权的所有数据集合
+      this.allAuthorizeData = this.allAuthorizeData || {}
+      this.allAuthorizeData[key] = info
+      // 保存微信Code
+      this[key] = info
+      this.$apply()
+      // 缓存微信Code
+      wepy.setStorageSync(statusKey, info)
+    }
+  }
+
+  /**
+   * 查看是否授权
+   */
+  isAuthorize(callBack) {
+    let that = this
+
+    wx.showLoading({
+      title: '加载中...',
+      mask: true
+    })
+    wx.getSetting({
+      success(resultSet) {
+        if (resultSet.authSetting['scope.userInfo']) {
+          if (callBack) {
+            callBack(true)
+          }
+          let encryptIv = wx.getStorageSync(STATUS.ENCRYPT_IV)
+          let userInfo = wx.getStorageSync(STATUS.USER_INFO)
+          if (!encryptIv && !userInfo) {
+            // 已经授权，可以直接调用 getUserInfo 获取头像昵称
+            wx.getUserInfo({
+              success(resultInfo) {
+                // 保存IV
+                wepy.setStorageSync(STATUS.ENCRYPT_IV, resultInfo.iv)
+                let userInfo = resultInfo.userInfo
+                if (userInfo) {
+                  // 保存并缓存数据
+                  that.saveAndCacheInfo(userInfo, 'userInfo', STATUS.USER_INFO)
+                  // 响应事件
+                  that.responseCustomEvent('onAuthorize', {
+                    key: 'UserInfo',
+                    result: userInfo
+                  })
+                }
+                wx.hideLoading()
+                // 直接授权获取userNo
+                that.shopWechatAuthVerify(resultInfo.userInfo, resultInfo)
+                // if (
+                //   that.authorizeType[that.authorizeType.length - 1] !==
+                //   'PhoneNumber'
+                // ) {
+                //   that.shopWechatAuthVerify(resultInfo.userInfo)
+                // } else {
+                //   // 递增已授权索引
+                //   that.authorizeIndexCount()
+                // }
+                // that.shopWechatAuthVerify(resultInfo.userInfo)
+              },
+              fail(res) {
+                that.responseCustomEvent('onAuthorizeError', {
+                  key: 'UserInfo',
+                  result: res
+                })
+              }
+            })
+          } else {
+            wx.hideLoading()
+            // 直接授权获取userNo
+            if (
+              that.authorizeType[that.authorizeType.length - 1] !==
+              'PhoneNumber'
+            ) {
+              that.shopWechatAuthVerify(userInfo)
+            } else {
+              // 递增已授权索引
+              that.authorizeIndexCount()
+            }
+          }
+        } else {
+          if (callBack) {
+            callBack(false)
+          }
+          wx.hideLoading()
+        }
+      }
+    })
+  }
+
+  onLoad() {
+    if (this.isAutoActivation) {
+      this.methods.authorizeActivation()
+    }
+    if (!this.logo) {
+      this.logo = RESOURCE_PATCH + 'assets/images/logo-big.png'
+      this.$apply()
+    }
+  }
+}
+</script>

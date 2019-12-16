@@ -1,0 +1,253 @@
+<!--
+ * @Description: 
+ * @Author: huyanhai
+ * @since: 2019-08-22 16:19:45
+ * @lastTime: 2019-10-30 17:36:09
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="logistics-info" wx:if="{{status === 'SHIPPED' || status === 'COMPLETED' || status === 'COMMENT'}}">
+        <view class="col-row" wx:if="{{ligisticsInfo.isMultipleLogistics==='YES'}}">
+          <view class="text">快递运单号：<text class="ui-color" @tap="orderTrack('cartLog')">点击查看</text></view>
+        </view>
+        <block wx:else>
+          <view class="col-row">
+            <view class="text">快递运单号：
+              <text class="ui-color" wx:if="{{orderType==='MULTIPLE_ADDRESS'}}" @tap="orderTrack()">点击查看</text>
+              <view wx:else class="lo-no">{{ligisticsInfo.logisticsNo}}
+                <text wx:if="{{ligisticsInfo.logisticsNo}}" class="copy" @tap="copyNo">复制</text>
+              </view>
+            </view>
+          </view>
+          <view class="col-row">
+            <text class="text">承运人：{{ligisticsInfo.logisticsName}}</text>
+          </view>
+          <view class="col-row"><text class="text">承运人联系方式：{{ligisticsInfo.logisticsMobile}}</text></view>
+        </block>
+      </view>
+      <view class="logistics-history">
+        <view class="list-item" wx:for="{{ligisticsInfo.logisticsProcessInfos}}" wx:item="item" wx:key="index">
+          <image class="new-state" src="{{resourct_path ? resourct_path+'OnlineRetailers/assets/images/logistice.png':''}}"></image>
+          <text class="text">{{item.processDes}}</text>
+          <text class="time">{{item.createTime}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+<script>
+import wepy from 'wepy'
+import { MyOrderService } from '../services'
+import { RESOURCE_PATCH } from '@/configs'
+import { Tips } from '@/utils'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class LogisticsPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    // 商品订单号
+    goodsOrderNo: '',
+    // 物流信息
+    ligisticsInfo: {},
+    resourct_path: RESOURCE_PATCH,
+    status: '',
+    giftData: '',
+    orderType: '',
+    title: '订单跟踪',
+    theme: 'while'
+  }
+  components = {
+    navigationBar
+  }
+  onLoad(opthon) {
+    this.orderType = opthon.type || ''
+    this.goodsOrderNo = opthon.goodsOrderNo
+    this.status = opthon.status
+    this.getLogistics()
+    this.$apply()
+  }
+
+  /**
+   * 获取物流信息
+   */
+  getLogistics() {
+    MyOrderService.orderLogisticsInfoQuery({
+      data: {
+        goodsOrderNo: this.goodsOrderNo
+      }
+    })
+      .then(res => {
+        let data = res.data
+        if (data.success) {
+          this.ligisticsInfo = data
+          this.$apply()
+        } else {
+          Tips.error(res.message)
+        }
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 复制
+   */
+  copyNo(e) {
+    let data = this.ligisticsInfo.logisticsNo || ''
+    wx.setClipboardData({
+      data: data,
+      success(res) {
+        wx.getClipboardData({
+          success(res) {}
+        })
+      }
+    })
+  }
+  methods = {
+    /**
+     * 订单追踪
+     */
+    orderTrack(e) {
+      let logisticsName = this.ligisticsInfo.logisticsName || ''
+      wx.navigateTo({
+        url:
+          'order_track?orderNo=' +
+          this.goodsOrderNo +
+          '&cartLog=' +
+          e +
+          '&logisticsName=' +
+          logisticsName
+      })
+    }
+  }
+}
+</script>
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
+    overflow-y: scroll;
+    display: flex;
+    height: 50vh;
+    width: 100%;
+    flex: 1 0 auto;
+    flex-direction: column;
+  }
+  .logistics-info {
+    padding: 30rpx 24rpx;
+    background: @color-ffffff;
+    margin: 30rpx;
+    border-radius: 12rpx;
+    line-height: 50rpx;
+    .col-row {
+      color: @color-555555;
+      font-size: 26rpx;
+      .text {
+        color: @color-333333;
+        display: flex;
+        .ui-color {
+          color: @brand-primary;
+        }
+      }
+      .lo-no {
+        // display: flex;
+        // flex-direction: row;
+        // align-items: center;
+      }
+      .copy {
+        display: inline;
+        font-size: 20rpx;
+        padding: 0 10rpx;
+        color: @brand-primary;
+        border: 2rpx solid @brand-primary;
+        border-radius: 4rpx;
+        margin-left: 8rpx;
+      }
+    }
+  }
+  .logistics-history {
+    background: @color-ffffff;
+    padding-left: 120rpx;
+    width: 100%;
+    .list-item {
+      position: relative;
+      line-height: 40rpx;
+      border-bottom: 2rpx solid @color-eeeeee;
+      padding: 30rpx 30rpx 30rpx 0;
+      box-sizing: border-box;
+      .new-state {
+        display: none;
+        width: 36rpx;
+        height: 36rpx;
+        position: absolute;
+        left: -65rpx;
+        top: 34rpx;
+        z-index: 10;
+      }
+      &:first-child {
+        .new-state {
+          display: block;
+        }
+        &::after {
+          height: 70%;
+        }
+        .text {
+          color: @color-222222;
+          font-weight: bold;
+        }
+      }
+      &::before {
+        background: @color-eeeeee;
+        width: 14rpx;
+        height: 14rpx;
+        display: block;
+        position: absolute;
+        left: -54rpx;
+        top: 40rpx;
+        border-radius: 12rpx;
+        content: '';
+      }
+      &::after {
+        position: absolute;
+        height: 100%;
+        width: 2rpx;
+        background: @color-eeeeee;
+        bottom: 0;
+        left: -48rpx;
+        content: '';
+      }
+      &:last-child {
+        border: 0;
+      }
+      .text {
+        font-size: 28rpx;
+        color: @color-888888;
+        display: block;
+      }
+      .time {
+        font-size: 28rpx;
+        color: @color-888888;
+      }
+    }
+  }
+}
+</style>

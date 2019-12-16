@@ -1,0 +1,115 @@
+<!--
+ * @Description: 浏览记录
+ * @Author: huyanhai
+ * @since: 2019-08-14 16:16:20
+ * @lastTime: 2019-09-17 10:45:13
+ * @如果有bug，那肯定不是我的锅
+ -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="notice-detail-hd">
+        <view class="title">{{detail.title}}</view>
+        <view class="text">{{detail.pubDate}}</view>
+      </view>
+      <view class="notice-detail-bd">
+        <rich-text nodes="{{detail.content}}"></rich-text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import { STATUS } from '@/configs'
+import { MyInfoService } from '../services'
+import { Tips } from '@/utils'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class noticeDetailPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+  data = {
+    detail: {},
+    userNo: '',
+    noticeNo: '',
+    title: '平台公告',
+    theme: 'while'
+  }
+  components = {
+    navigationBar
+  }
+  getDetails(parmes) {
+    let parme = Object.assign({}, parmes)
+    parme['userNo'] = this.userNo
+    parme['noticeNo'] = this.noticeNo
+    MyInfoService.platformNoticeInfo({ data: parme }).then(res => {
+      if (res.data.success) {
+        this.detail = res.data
+        this.$apply()
+      } else {
+        Tips.error(res.message)
+      }
+    })
+  }
+  onLoad(options) {
+    this.userNo = wepy.getStorageSync(STATUS.USER_NO)
+    this.noticeNo = options.noticeNo
+    this.$apply()
+  }
+  onShow() {
+    this.getDetails()
+  }
+}
+</script>
+
+<style lang='less'>
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    background: #ffffff;
+    padding: 0 20rpx;
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    .notice-detail-hd {
+      border-bottom: 1px solid @color-eeeeee;
+      overflow: hidden;
+      margin-top: 20rpx;
+      .title {
+        color: @color-222222;
+        font-size: 28rpx;
+        line-height: 30rpx;
+        margin: 30rpx 0 0 0;
+      }
+      .text {
+        color: @color-888888;
+        font-size: 24rpx;
+        height: 100rpx;
+        line-height: 100rpx;
+      }
+    }
+    .notice-detail-bd {
+      font-size: 28rpx;
+      color: @color-888888;
+      line-height: 40rpx;
+      margin: 30rpx 0;
+    }
+  }
+}
+</style>

@@ -1,0 +1,269 @@
+<!--
+  搜索框组件-视图模板
+  @Author: AndyPan
+  @version: 1.0.0
+  @CreateDate: 2019年5月9日17:56:21
+  @LastUpdateDate: 2019年5月9日18:03:59
+  @Remarks: 备注
+-->
+
+<!-- 组件样式 -->
+<style lang="less">
+// @import '../assets/less/mixin.less';
+@import '../assets/less/_variables.less';
+page {
+  background: @color-F3F4F5;
+  height: 100vh;
+  overflow-y: scroll;
+}
+.page-box {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  .nav {
+    flex: 0 0 auto;
+  }
+  .page {
+    flex: 1 0 auto;
+    height: 50vh;
+    overflow: hidden;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+@searchBoxHeight: 90rpx;
+.search-box-wrap {
+  background: @color-ffffff;
+  padding: 0 30rpx;
+  height: @searchBoxHeight;
+}
+.page-index-cont {
+  top: @searchBoxHeight;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  .goods-list-component {
+    height: calc(100vh - 308rpx);
+  }
+  &.is-x {
+    .goods-list-component {
+      height: calc(100vh - 408rpx);
+    }
+  }
+}
+</style>
+
+<!-- 组件视图 -->
+<template>
+  <view class="page-box">
+    <navigationBar :title.sync="title" :theme="theme" class="nav" />
+    <view class="page">
+      <view class="search-box-wrap">
+        <search-box type="working" :onSearch="onSearchFn" :autoFocus.sync="autoFocus" :isBlurSearch="isBlurSearch" />
+      </view>
+      <view class="{{'page-index-cont' + (modelXHeight>0 ? ' is-x' : '')}}">
+        <tab :isFull="isFull" wx:if="{{searchWork}}" :isHideSwitch.sync="isHideSwitch" type="fixed" models="simple" :isHeadShadow="isHeadShadow" :items.sync="tabItems" :onScrollLower="onScrollLowerFn" :onScrollUpper="onScrollUpperFn" :onSwitch="tabSwitchFn">
+          <view slot="tab-content-slot">
+            <goods-list :dataset.sync="goodsList" :nullImg.sync="nullImg"></goods-list>
+          </view>
+        </tab>
+      </view>
+    </view>
+  </view>
+</template>
+
+<!-- 组件业务逻辑 -->
+<script>
+import wepy from 'wepy'
+import SearchBoxComponent from './components/search-box-component/index'
+import TabComponent from '@/components/tab-component/index'
+import GoodsListComponent from './components/goods-list-component/index'
+import { Tips, Utils, DataPipe } from '@/utils'
+import { IndexService } from '../services'
+import navigationBar from '@/components/navigation-bar/index'
+
+export default class GoodsSearchPages extends wepy.page {
+  // 配置
+  config = {
+    navigationStyle: 'custom',
+    backgroundTextStyle: 'light',
+    navigationBarTextStyle: 'black',
+    disableScroll: true
+  }
+
+  components = {
+    // 搜索框
+    'search-box': SearchBoxComponent,
+    // 商品类型选项卡
+    tab: TabComponent,
+    // 商品列表
+    'goods-list': GoodsListComponent,
+    navigationBar
+  }
+
+  data = {
+    title: '搜索',
+    theme: 'while',
+    // 填充(满容器)选项卡
+    isFull: true,
+    autoFocus: false,
+    isHeadShadow: false,
+    isBlurSearch: false,
+    // 是否启动搜索
+    searchWork: false,
+    // 选项卡选项数据
+    tabItems: [
+      { key: 'MARKETABLETIME', title: '上架时间' },
+      { key: 'PRICE', title: '价格', sort: 'default', sortKey: 'price' }
+    ],
+    // 商品列表(初始加载状态)
+    goodsList: 'loading',
+    // 页码
+    pageNo: 1,
+    // 总页数
+    totalPages: 1,
+    // 当前搜索商品的分类编号
+    categoryNO: null,
+    // 当前搜索商品关键字
+    keyWord: '',
+    // 排序字段
+    sortField: '',
+    order: false,
+    // 是否展示缺省图
+    nullImg: true,
+    // 隐藏切换栏
+    isHideSwitch: false,
+    activityCode: '',
+    titles: '',
+    modelXHeight: 0
+  }
+
+  /**
+   * 选项卡切换
+   */
+  tabSwitchFn(item, idx, e) {
+    this.sortField = item.key
+    if (this.sortField === 'MARKETABLETIME') {
+      this.tabItems[1].sort = 'default'
+      this.tabItems[1].activeCount = 1
+      this.$apply()
+    } else {
+      if (item.sort === 'asc') {
+        this.order = true
+      } else {
+        this.order = false
+      }
+    }
+    if (this.searchWork) {
+      this.loadData(true)
+    }
+  }
+
+  /**
+   * 向下滚动加载数据
+   */
+  onScrollLowerFn() {
+    if (this.pageNo < this.totalPages) {
+      this.pageNo++
+      this.loadData('', true)
+    }
+  }
+
+  /**
+   * 向上滚动刷新数据
+   */
+  onScrollUpperFn() {
+    if (this.pageNo !== 1) {
+      this.pageNo = 1
+      this.loadData()
+    }
+  }
+
+  loadData(isShowLoad, isPage, parmes) {
+    let parme = Object.assign(
+      {
+        sortField: this.sortField,
+        start: this.pageNo,
+        order: this.order,
+        searchKey: this.keyword
+      },
+      parmes
+    )
+    if (isShowLoad) {
+      // 初始页面列表内容位置显示'加载中'
+      this.goodsList = 'loading'
+      this.$apply()
+    }
+    IndexService.mpGoodsSearchPageQuery({
+      data: parme
+    })
+      .then(res => {
+        let data = res.data || {}
+        let dataRows = data.rows || []
+
+        if (dataRows.length > 0) {
+          this.isHideSwitch = true
+        } else {
+          this.isHideSwitch = false
+        }
+        DataPipe.basePipe(dataRows)
+        if (isPage) {
+          Utils.forEach(dataRows, item => {
+            this.goodsList.push(item)
+          })
+        } else {
+          this.goodsList = dataRows
+        }
+        if (dataRows.length > 0 && dataRows[0].activeList.length > 0) {
+          this.titles = dataRows[0].activeList[0].activityName
+          if (this.activityCode) {
+            this.title = this.titles
+          }
+        }
+        this.$apply()
+      })
+      .catch(err => {
+        Tips.error(err.message)
+      })
+  }
+
+  /**
+   * 搜索框搜索
+   */
+  onSearchFn(e) {
+    let keyword = (e.detail || {}).value
+    this.keyword = keyword
+    this.searchWork = true
+    this.$apply()
+    this.loadData(true)
+  }
+  getSystemInfo() {
+    let that = this
+    wx.getSystemInfo({
+      success(res) {
+        let model = res.model
+        if (model.indexOf('X') > -1) {
+          that.modelXHeight = 50
+          that.$apply()
+        }
+      }
+    })
+  }
+  onLoad(options) {
+    this.activityCode = options.activityId || ''
+    this.autoFocus = !options.noAutoFouce || false
+    this.getSystemInfo()
+    this.$apply()
+  }
+  onShow() {
+    this.keyword = ''
+    if (this.activityCode) {
+      this.searchWork = true
+      this.loadData(false, false, {
+        activityCode: this.activityCode,
+        sortField: 'MARKETABLETIME'
+      })
+    }
+  }
+}
+</script>
